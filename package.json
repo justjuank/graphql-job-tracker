@@ -1,0 +1,48 @@
+{
+  "name": "graphql-job-tracker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A portfolio project for learning GraphQL by building a job application tracker.",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "prebuild": "prisma generate",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:studio": "node scripts/studio.mjs",
+    "pretest": "prisma migrate deploy --config prisma.test.config.ts",
+    "test": "npm run build && node dist/test/server.test.js"
+  },
+  "dependencies": {
+    "@apollo/server": "^5.0.0",
+    "@graphql-tools/schema": "^10.1.1",
+    "@graphql-tools/utils": "^12.0.1",
+    "@prisma/adapter-better-sqlite3": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "dataloader": "^2.2.3",
+    "dotenv": "^18.0.3",
+    "graphql": "^16.0.0",
+    "jose": "^6.2.12"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^24.0.0",
+    "prisma": "^7.10.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.11.1": true,
+    "@prisma/engines@7.10.0": true,
+    "prisma@7.10.0": true,
+    "esbuild@0.28.2": true,
+    "@apollo/protobufjs@1.2.8": true
+  }
+}
