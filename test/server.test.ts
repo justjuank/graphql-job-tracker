@@ -682,3 +682,103 @@ test("filters a page by status and company name", async () => {
     },
   });
 });
+
+test("rejects recursive relationship queries that exceed the depth policy", async () => {
+  const response = await server.executeOperation(
+    {
+      query: `#graphql
+        query ExcessivelyNestedApplications {
+          applications {
+            company {
+              applications {
+                company {
+                  applications {
+                    company {
+                      applications { id }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `,
+    },
+    { contextValue: contextValue() },
+  );
+
+  assert.equal(response.body.kind, "single");
+  assert.equal(response.body.singleResult.data, undefined);
+  assert.equal(
+    response.body.singleResult.errors?.[0].extensions?.code,
+    "GRAPHQL_VALIDATION_FAILED",
+  );
+  assert.match(
+    response.body.singleResult.errors?.[0].message ?? "",
+    /depth|nested/i,
+  );
+});
+
+test("uses pagination variables when calculating query complexity", async () => {
+  const query = `#graphql
+    query CostedApplicationPage($first: Int!) {
+      applicationPage(first: $first) {
+        edges {
+          node {
+            id
+            role
+            status
+            createdAt
+            company { id name }
+            interviews { id type scheduledAt }
+          }
+        }
+        pageInfo { hasNextPage endCursor }
+      }
+    }
+  `;
+
+  const accepted = await server.executeOperation(
+    { query, variables: { first: 1 } },
+    { contextValue: contextValue() },
+  );
+  assert.equal(accepted.body.kind, "single");
+  assert.deepEqual(accepted.body.singleResult.errors, undefined);
+
+  const rejected = await server.executeOperation(
+    { query, variables: { first: 10 } },
+    { contextValue: contextValue() },
+  );
+  assert.equal(rejected.body.kind, "single");
+  assert.equal(rejected.body.singleResult.data, undefined);
+  assert.equal(
+    rejected.body.singleResult.errors?.[0].extensions?.code,
+    "QUERY_TOO_COMPLEX",
+  );
+  assert.equal(
+    rejected.body.singleResult.errors?.[0].extensions?.maxComplexity,
+    200,
+  );
+  assert.ok(
+    Number(rejected.body.singleResult.errors?.[0].extensions?.complexity) > 200,
+  );
+});
+
+test("keeps introspection available for schema autocomplete", async () => {
+  const response = await server.executeOperation(
+    {
+      query: `#graphql
+        query IntrospectionQuery {
+          __schema { queryType { name } }
+        }
+      `,
+    },
+    { contextValue: contextValue(undefined, "") },
+  );
+
+  assert.equal(response.body.kind, "single");
+  assert.deepEqual(response.body.singleResult.errors, undefined);
+  assert.deepEqual(asPlainObject(response.body.singleResult.data), {
+    __schema: { queryType: { name: "Query" } },
+  });
+});

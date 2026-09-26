@@ -23,6 +23,7 @@ companies, applications, and interviews in SQLite.
 - Request authentication and per-user application ownership
 - Declarative field authorization with custom schema directives and roles
 - Thin resolvers backed by a reusable application service
+- Query-depth, recursive-field, and variable-aware complexity limits
 - Testing operations without opening a network port
 
 ## Run locally
@@ -123,6 +124,37 @@ query AdminUsers {
   }
 }
 ```
+
+## Query depth and complexity protection
+
+GraphQL clients choose their own response shape, so the server validates the
+cost of an operation before running any resolver. `src/query-protection.ts`
+provides two complementary protections:
+
+- A static validation rule limits selection depth, nested lists, repeated
+  traversal of the same field, and total query nodes.
+- An Apollo `didResolveOperation` plugin calculates request-specific complexity
+  after variables are available but before execution starts.
+
+List fields use estimated result-size multipliers. The cursor connection uses
+its actual `first` argument, so requesting a larger page costs more even when
+`first` is supplied through a variable. Requests over the budget return a
+`QUERY_TOO_COMPLEX` error. Introspection has separate depth protection and is
+kept available for Apollo Sandbox and Postman's schema autocomplete.
+
+The defaults can be tuned without changing code:
+
+```dotenv
+GRAPHQL_MAX_DEPTH="8"
+GRAPHQL_MAX_LIST_DEPTH="3"
+GRAPHQL_MAX_SELF_REFERENTIAL_DEPTH="2"
+GRAPHQL_MAX_COMPLEXITY="200"
+GRAPHQL_MAX_QUERY_NODES="1000"
+```
+
+Complexity is a protective estimate, not a measurement of database time. It
+should be tuned using observed production operations and combined with
+pagination, rate limiting, request-size limits, and execution timeouts.
 
 To inspect and edit the records visually, run:
 
@@ -375,6 +407,7 @@ src/errors.ts       Consistent GraphQL errors and extension codes
 src/db.ts           Prisma client and SQLite adapter construction
 src/loaders.ts      Request-scoped relationship batching and caching
 src/pagination.ts   Opaque application cursor encoding and validation
+src/query-protection.ts Depth and variable-aware complexity policies
 src/scalars.ts      DateTime parsing, validation, and serialization
 src/seed.ts         Shared, repeatable seed-data function
 src/server.ts       Reusable Apollo Server construction
@@ -384,5 +417,4 @@ prisma/migrations/  Version-controlled database changes
 test/server.test.ts GraphQL tests against an isolated SQLite database
 ```
 
-The next GraphQL milestone is query-depth and complexity protection, followed by
-a small Apollo Client interface for the portfolio.
+The next milestone is a small Apollo Client interface for the portfolio.
