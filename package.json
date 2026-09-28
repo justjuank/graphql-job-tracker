@@ -6,9 +6,12 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "dev:client": "npm --prefix client run dev",
     "start": "tsx src/index.ts",
     "prebuild": "prisma generate",
     "build": "tsc",
+    "build:client": "npm --prefix client run build",
+    "lint:client": "npm --prefix client run lint",
     "typecheck": "tsc --noEmit",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",

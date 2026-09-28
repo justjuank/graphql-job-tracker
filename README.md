@@ -24,15 +24,26 @@ companies, applications, and interviews in SQLite.
 - Declarative field authorization with custom schema directives and roles
 - Thin resolvers backed by a reusable application service
 - Query-depth, recursive-field, and variable-aware complexity limits
+- A React and Apollo Client frontend with bearer-token authentication
 - Testing operations without opening a network port
 
 ## Run locally
 
 ```bash
 npm install
+npm --prefix client install
 npm run db:deploy
 npm run db:seed
+```
+
+Start the API and client in separate terminals:
+
+```bash
 npm run dev
+```
+
+```bash
+npm run dev:client
 ```
 
 Copy `.env.example` to `.env` before starting, and replace `JWT_SECRET` with a
@@ -40,6 +51,7 @@ private value containing at least 32 characters. `npm run db:seed` resets the
 local database and creates the demo account described below.
 
 Open <http://localhost:4000> to use Apollo Sandbox.
+Open <http://localhost:5173> to use the React client.
 
 The SQLite database is stored locally in `dev.db`. GraphQL resolvers receive a
 Prisma client through Apollo's request context and use it to query the database.
@@ -88,6 +100,11 @@ query CurrentUser {
   }
 }
 ```
+
+The React client performs the same flow through Apollo Client. Its
+`SetContextLink` reads the current access token from `sessionStorage` for every
+operation and adds the bearer header. Logging out removes the token and clears
+Apollo's normalized cache so cached data cannot leak into a later session.
 
 ## Authorization directives and services
 
@@ -412,9 +429,11 @@ src/scalars.ts      DateTime parsing, validation, and serialization
 src/seed.ts         Shared, repeatable seed-data function
 src/server.ts       Reusable Apollo Server construction
 src/index.ts        HTTP entry point
+client/             React, Vite, and Apollo Client application
 prisma/schema.prisma Database models and relationships
 prisma/migrations/  Version-controlled database changes
 test/server.test.ts GraphQL tests against an isolated SQLite database
 ```
 
-The next milestone is a small Apollo Client interface for the portfolio.
+The next client milestone is the cursor-paginated application dashboard with
+filters, reusable fragments, and an Apollo cache merge policy.
