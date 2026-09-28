@@ -1,19 +1,5 @@
-import { gql } from '@apollo/client'
+import { gql, type TypedDocumentNode } from '@apollo/client'
 import { useQuery } from '@apollo/client/react'
-
-const CURRENT_USER_QUERY = gql`
-  query CurrentUser {
-    me {
-      id
-      email
-      role
-      applications {
-        id
-        status
-      }
-    }
-  }
-`
 
 type ApplicationStatus =
   | 'SAVED'
@@ -34,12 +20,31 @@ type CurrentUserData = {
   }
 }
 
+type CurrentUserVariables = Record<string, never>
+
+const CURRENT_USER_QUERY: TypedDocumentNode<
+  CurrentUserData,
+  CurrentUserVariables
+> = gql`
+  query CurrentUser {
+    me {
+      id
+      email
+      role
+      applications {
+        id
+        status
+      }
+    }
+  }
+`
+
 type AuthenticatedHomeProps = {
   onLogout: () => Promise<void>
 }
 
 export function AuthenticatedHome({ onLogout }: AuthenticatedHomeProps) {
-  const { data, loading, error } = useQuery<CurrentUserData>(CURRENT_USER_QUERY)
+  const { data, loading, error } = useQuery(CURRENT_USER_QUERY)
 
   if (loading) {
     return (

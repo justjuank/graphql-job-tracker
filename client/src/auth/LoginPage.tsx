@@ -1,21 +1,8 @@
-import { gql } from '@apollo/client'
+import { gql, type TypedDocumentNode } from '@apollo/client'
 import { useMutation } from '@apollo/client/react'
 import { type FormEvent, useState } from 'react'
 
 import { setAccessToken } from './token-storage'
-
-const LOGIN_MUTATION = gql`
-  mutation Login($input: LoginInput!) {
-    login(input: $input) {
-      token
-      user {
-        id
-        email
-        role
-      }
-    }
-  }
-`
 
 type LoginMutationData = {
   login: {
@@ -35,6 +22,22 @@ type LoginMutationVariables = {
   }
 }
 
+const LOGIN_MUTATION: TypedDocumentNode<
+  LoginMutationData,
+  LoginMutationVariables
+> = gql`
+  mutation Login($input: LoginInput!) {
+    login(input: $input) {
+      token
+      user {
+        id
+        email
+        role
+      }
+    }
+  }
+`
+
 type LoginPageProps = {
   onAuthenticated: () => void
 }
@@ -42,10 +45,7 @@ type LoginPageProps = {
 export function LoginPage({ onAuthenticated }: LoginPageProps) {
   const [email, setEmail] = useState('demo@example.com')
   const [password, setPassword] = useState('portfolio-demo-password')
-  const [login, { loading, error }] = useMutation<
-    LoginMutationData,
-    LoginMutationVariables
-  >(LOGIN_MUTATION)
+  const [login, { loading, error }] = useMutation(LOGIN_MUTATION)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
