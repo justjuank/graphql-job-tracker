@@ -25,6 +25,7 @@ companies, applications, and interviews in SQLite.
 - Thin resolvers backed by a reusable application service
 - Query-depth, recursive-field, and variable-aware complexity limits
 - A React and Apollo Client frontend with bearer-token authentication
+- Schema-validated client operations and generated TypeScript types
 - Testing operations without opening a network port
 
 ## Run locally
@@ -105,6 +106,27 @@ The React client performs the same flow through Apollo Client. Its
 `SetContextLink` reads the current access token from `sessionStorage` for every
 operation and adds the bearer header. Logging out removes the token and clears
 Apollo's normalized cache so cached data cannot leak into a later session.
+
+## Generate client operation types
+
+The client uses GraphQL Code Generator's client preset. It reads the server's
+`typeDefs` directly from `src/schema.ts`, validates every client operation, and
+generates typed documents in `client/src/gql/`.
+
+```bash
+npm --prefix client run codegen
+```
+
+Generation runs automatically before `dev` and `build`. While editing several
+operations, run the watcher in a separate terminal:
+
+```bash
+npm --prefix client run codegen:watch
+```
+
+Files in `client/src/gql/` are generated artifacts and should not be edited by
+hand. Components use the generated `graphql()` function, allowing Apollo hooks
+to infer operation results and variables without handwritten mirror types.
 
 ## Authorization directives and services
 
@@ -430,10 +452,12 @@ src/seed.ts         Shared, repeatable seed-data function
 src/server.ts       Reusable Apollo Server construction
 src/index.ts        HTTP entry point
 client/             React, Vite, and Apollo Client application
+client/codegen.ts   Client operation validation and type-generation config
+client/src/gql/     Generated typed GraphQL documents and schema types
 prisma/schema.prisma Database models and relationships
 prisma/migrations/  Version-controlled database changes
 test/server.test.ts GraphQL tests against an isolated SQLite database
 ```
 
-The next client milestone is the cursor-paginated application dashboard with
-filters, reusable fragments, and an Apollo cache merge policy.
+The next client milestone adds application mutations and deliberate Apollo
+cache updates to the cursor-paginated dashboard.

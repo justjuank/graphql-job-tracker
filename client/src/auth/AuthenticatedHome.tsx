@@ -1,52 +1,10 @@
-import { gql, type TypedDocumentNode } from '@apollo/client'
 import { useQuery } from '@apollo/client/react'
 import { type FormEvent, useState } from 'react'
 
-type ApplicationStatus =
-  | 'SAVED'
-  | 'APPLIED'
-  | 'INTERVIEWING'
-  | 'REJECTED'
-  | 'OFFER'
+import { graphql } from '../gql'
+import type { ApplicationFilter, ApplicationStatus } from '../gql/graphql'
 
-type ApplicationFilter = {
-  status?: ApplicationStatus
-  roleContains?: string
-  companyNameContains?: string
-}
-
-type DashboardQueryData = {
-  me: {
-    id: string
-    email: string
-    role: 'USER' | 'ADMIN'
-    applications: Array<{ id: string; status: ApplicationStatus }>
-  }
-  applicationPage: {
-    edges: Array<{
-      cursor: string
-      node: {
-        id: string
-        role: string
-        status: ApplicationStatus
-        createdAt: string
-        company: { id: string; name: string }
-      }
-    }>
-    pageInfo: { hasNextPage: boolean; endCursor: string | null }
-  }
-}
-
-type DashboardQueryVariables = {
-  first: number
-  after: string | null
-  filter: ApplicationFilter | null
-}
-
-const DASHBOARD_QUERY: TypedDocumentNode<
-  DashboardQueryData,
-  DashboardQueryVariables
-> = gql`
+const DASHBOARD_QUERY = graphql(`
   query Dashboard(
     $first: Int!
     $after: String
@@ -81,7 +39,7 @@ const DASHBOARD_QUERY: TypedDocumentNode<
       }
     }
   }
-`
+`)
 
 const PAGE_SIZE = 5
 

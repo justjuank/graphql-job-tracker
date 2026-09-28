@@ -1,31 +1,10 @@
-import { gql, type TypedDocumentNode } from '@apollo/client'
 import { useMutation } from '@apollo/client/react'
 import { type FormEvent, useState } from 'react'
 
+import { graphql } from '../gql'
 import { setAccessToken } from './token-storage'
 
-type LoginMutationData = {
-  login: {
-    token: string
-    user: {
-      id: string
-      email: string
-      role: 'USER' | 'ADMIN'
-    }
-  }
-}
-
-type LoginMutationVariables = {
-  input: {
-    email: string
-    password: string
-  }
-}
-
-const LOGIN_MUTATION: TypedDocumentNode<
-  LoginMutationData,
-  LoginMutationVariables
-> = gql`
+const LOGIN_MUTATION = graphql(`
   mutation Login($input: LoginInput!) {
     login(input: $input) {
       token
@@ -36,7 +15,7 @@ const LOGIN_MUTATION: TypedDocumentNode<
       }
     }
   }
-`
+`)
 
 type LoginPageProps = {
   onAuthenticated: () => void
