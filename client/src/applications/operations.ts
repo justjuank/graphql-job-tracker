@@ -51,3 +51,13 @@ export const CREATE_APPLICATION_MUTATION = graphql(`
     }
   }
 `)
+
+export const UPDATE_APPLICATION_STATUS_MUTATION = graphql(`
+  mutation UpdateApplicationStatus($id: ID!, $status: ApplicationStatus!) {
+    updateApplicationStatus(id: $id, status: $status) {
+      __typename
+      id
+      status
+    }
+  }
+`)

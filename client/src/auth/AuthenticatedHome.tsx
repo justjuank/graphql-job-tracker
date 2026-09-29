@@ -2,6 +2,7 @@ import { useQuery } from '@apollo/client/react'
 import { type FormEvent, useState } from 'react'
 
 import { CreateApplicationForm } from '../applications/CreateApplicationForm'
+import { ApplicationStatusSelect } from '../applications/ApplicationStatusSelect'
 import { statusLabels } from '../applications/application-status'
 import { DASHBOARD_QUERY } from '../applications/operations'
 import type { ApplicationFilter, ApplicationStatus } from '../gql/graphql'
@@ -257,11 +258,12 @@ export function AuthenticatedHome({ onLogout }: AuthenticatedHomeProps) {
                     <span>Added</span>
                     <strong>{formatDate(application.createdAt)}</strong>
                   </div>
-                  <span
-                    className={`status-badge status-${application.status.toLowerCase()}`}
-                  >
-                    {statusLabels[application.status]}
-                  </span>
+                  <ApplicationStatusSelect
+                    activeStatusFilter={filter?.status ?? null}
+                    applicationId={application.id}
+                    applicationRole={application.role}
+                    status={application.status}
+                  />
                 </article>
               ))
             )}

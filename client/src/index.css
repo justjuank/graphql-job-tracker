@@ -554,7 +554,8 @@ button {
   font-size: 0.78rem;
 }
 
-.status-badge {
+.status-badge,
+.status-select {
   justify-self: end;
   padding: 7px 10px;
   border-radius: 999px;
@@ -562,6 +563,34 @@ button {
   font-weight: 850;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.status-editor {
+  display: grid;
+  justify-items: end;
+  gap: 5px;
+}
+
+.status-select {
+  max-width: 150px;
+  border: 0;
+  outline: none;
+  cursor: pointer;
+}
+
+.status-select:focus {
+  box-shadow: 0 0 0 3px rgba(22, 63, 50, 0.14);
+}
+
+.status-select:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.status-error {
+  color: #a33b2d;
+  font-size: 0.68rem;
+  font-weight: 750;
 }
 
 .status-saved { color: #4c5550; background: #e3e5e2; }
@@ -921,9 +950,14 @@ button {
     grid-template-columns: auto 1fr;
   }
 
-  .status-badge {
+  .status-badge,
+  .status-editor {
     grid-column: 2;
     justify-self: start;
+  }
+
+  .status-editor {
+    justify-items: start;
   }
 
   .pagination {

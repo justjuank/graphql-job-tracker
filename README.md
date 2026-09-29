@@ -27,6 +27,7 @@ companies, applications, and interviews in SQLite.
 - A React and Apollo Client frontend with bearer-token authentication
 - Schema-validated client operations and generated TypeScript types
 - Creating applications from the client with mutation refetching
+- Optimistic status updates through Apollo's normalized cache
 - Testing operations without opening a network port
 
 ## Run locally
@@ -460,5 +461,5 @@ prisma/migrations/  Version-controlled database changes
 test/server.test.ts GraphQL tests against an isolated SQLite database
 ```
 
-The next client milestone updates application statuses and compares Apollo's
-automatic normalized updates with explicit list and summary cache handling.
+The next client milestone adds application detail editing and deletion while
+keeping paginated connections consistent.
