@@ -2,6 +2,7 @@ import { useQuery } from '@apollo/client/react'
 import { type FormEvent, useState } from 'react'
 
 import { CreateApplicationForm } from '../applications/CreateApplicationForm'
+import { ApplicationDetailPanel } from '../applications/ApplicationDetailPanel'
 import { ApplicationStatusSelect } from '../applications/ApplicationStatusSelect'
 import { statusLabels } from '../applications/application-status'
 import { DASHBOARD_QUERY } from '../applications/operations'
@@ -30,6 +31,9 @@ export function AuthenticatedHome({ onLogout }: AuthenticatedHomeProps) {
   const [cursorHistory, setCursorHistory] = useState<Array<string | null>>([])
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [createdMessage, setCreatedMessage] = useState<string | null>(null)
+  const [selectedApplicationId, setSelectedApplicationId] = useState<
+    string | null
+  >(null)
 
   const { data, loading, error } = useQuery(DASHBOARD_QUERY, {
     variables: { first: PAGE_SIZE, after, filter },
@@ -67,6 +71,13 @@ export function AuthenticatedHome({ onLogout }: AuthenticatedHomeProps) {
     resetPagination(null)
     setShowCreateForm(false)
     setCreatedMessage(`${createdRole} was added to your pipeline.`)
+  }
+
+  function handleDeleted(deletedRole: string) {
+    setSelectedApplicationId(null)
+    setCursorHistory([])
+    setAfter(null)
+    setCreatedMessage(`${deletedRole} was deleted from your pipeline.`)
   }
 
   function showNextPage() {
@@ -250,10 +261,14 @@ export function AuthenticatedHome({ onLogout }: AuthenticatedHomeProps) {
                   <div className="company-initial" aria-hidden="true">
                     {application.company.name.charAt(0).toUpperCase()}
                   </div>
-                  <div className="application-identity">
+                  <button
+                    className="application-identity application-detail-link"
+                    onClick={() => setSelectedApplicationId(application.id)}
+                    type="button"
+                  >
                     <strong>{application.role}</strong>
                     <span>{application.company.name}</span>
-                  </div>
+                  </button>
                   <div className="application-meta">
                     <span>Added</span>
                     <strong>{formatDate(application.createdAt)}</strong>
@@ -291,6 +306,15 @@ export function AuthenticatedHome({ onLogout }: AuthenticatedHomeProps) {
           </nav>
         </section>
       </section>
+
+      {selectedApplicationId ? (
+        <ApplicationDetailPanel
+          applicationId={selectedApplicationId}
+          dashboardVariables={{ first: PAGE_SIZE, after, filter }}
+          onClose={() => setSelectedApplicationId(null)}
+          onDeleted={handleDeleted}
+        />
+      ) : null}
     </main>
   )
 }

@@ -28,6 +28,7 @@ companies, applications, and interviews in SQLite.
 - Schema-validated client operations and generated TypeScript types
 - Creating applications from the client with mutation refetching
 - Optimistic status updates through Apollo's normalized cache
+- Lazy application details, editing, interview scheduling, and deletion
 - Testing operations without opening a network port
 
 ## Run locally
@@ -461,5 +462,5 @@ prisma/migrations/  Version-controlled database changes
 test/server.test.ts GraphQL tests against an isolated SQLite database
 ```
 
-The next client milestone adds application detail editing and deletion while
-keeping paginated connections consistent.
+The next client milestone adds automated frontend tests for the authenticated
+queries, optimistic mutations, and cache behavior.
