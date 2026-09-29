@@ -26,6 +26,7 @@ companies, applications, and interviews in SQLite.
 - Query-depth, recursive-field, and variable-aware complexity limits
 - A React and Apollo Client frontend with bearer-token authentication
 - Schema-validated client operations and generated TypeScript types
+- Creating applications from the client with mutation refetching
 - Testing operations without opening a network port
 
 ## Run locally
@@ -459,5 +460,5 @@ prisma/migrations/  Version-controlled database changes
 test/server.test.ts GraphQL tests against an isolated SQLite database
 ```
 
-The next client milestone adds application mutations and deliberate Apollo
-cache updates to the cursor-paginated dashboard.
+The next client milestone updates application statuses and compares Apollo's
+automatic normalized updates with explicit list and summary cache handling.

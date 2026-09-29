@@ -15,10 +15,12 @@ import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-
  */
 type Documents = {
     "\n  query Dashboard(\n    $first: Int!\n    $after: String\n    $filter: ApplicationFilter\n  ) {\n    me {\n      id\n      email\n      role\n      applications {\n        id\n        status\n      }\n    }\n    applicationPage(first: $first, after: $after, filter: $filter) {\n      edges {\n        cursor\n        node {\n          id\n          role\n          status\n          createdAt\n          company {\n            id\n            name\n          }\n        }\n      }\n      pageInfo {\n        hasNextPage\n        endCursor\n      }\n    }\n  }\n": typeof types.DashboardDocument,
+    "\n  mutation CreateApplication($input: CreateApplicationInput!) {\n    createApplication(input: $input) {\n      id\n      role\n      status\n      createdAt\n      company {\n        id\n        name\n      }\n    }\n  }\n": typeof types.CreateApplicationDocument,
     "\n  mutation Login($input: LoginInput!) {\n    login(input: $input) {\n      token\n      user {\n        id\n        email\n        role\n      }\n    }\n  }\n": typeof types.LoginDocument,
 };
 const documents: Documents = {
     "\n  query Dashboard(\n    $first: Int!\n    $after: String\n    $filter: ApplicationFilter\n  ) {\n    me {\n      id\n      email\n      role\n      applications {\n        id\n        status\n      }\n    }\n    applicationPage(first: $first, after: $after, filter: $filter) {\n      edges {\n        cursor\n        node {\n          id\n          role\n          status\n          createdAt\n          company {\n            id\n            name\n          }\n        }\n      }\n      pageInfo {\n        hasNextPage\n        endCursor\n      }\n    }\n  }\n": types.DashboardDocument,
+    "\n  mutation CreateApplication($input: CreateApplicationInput!) {\n    createApplication(input: $input) {\n      id\n      role\n      status\n      createdAt\n      company {\n        id\n        name\n      }\n    }\n  }\n": types.CreateApplicationDocument,
     "\n  mutation Login($input: LoginInput!) {\n    login(input: $input) {\n      token\n      user {\n        id\n        email\n        role\n      }\n    }\n  }\n": types.LoginDocument,
 };
 
@@ -40,6 +42,10 @@ export function graphql(source: string): unknown;
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query Dashboard(\n    $first: Int!\n    $after: String\n    $filter: ApplicationFilter\n  ) {\n    me {\n      id\n      email\n      role\n      applications {\n        id\n        status\n      }\n    }\n    applicationPage(first: $first, after: $after, filter: $filter) {\n      edges {\n        cursor\n        node {\n          id\n          role\n          status\n          createdAt\n          company {\n            id\n            name\n          }\n        }\n      }\n      pageInfo {\n        hasNextPage\n        endCursor\n      }\n    }\n  }\n"): (typeof documents)["\n  query Dashboard(\n    $first: Int!\n    $after: String\n    $filter: ApplicationFilter\n  ) {\n    me {\n      id\n      email\n      role\n      applications {\n        id\n        status\n      }\n    }\n    applicationPage(first: $first, after: $after, filter: $filter) {\n      edges {\n        cursor\n        node {\n          id\n          role\n          status\n          createdAt\n          company {\n            id\n            name\n          }\n        }\n      }\n      pageInfo {\n        hasNextPage\n        endCursor\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation CreateApplication($input: CreateApplicationInput!) {\n    createApplication(input: $input) {\n      id\n      role\n      status\n      createdAt\n      company {\n        id\n        name\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateApplication($input: CreateApplicationInput!) {\n    createApplication(input: $input) {\n      id\n      role\n      status\n      createdAt\n      company {\n        id\n        name\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

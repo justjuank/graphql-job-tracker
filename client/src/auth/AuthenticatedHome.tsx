@@ -1,55 +1,12 @@
 import { useQuery } from '@apollo/client/react'
 import { type FormEvent, useState } from 'react'
 
-import { graphql } from '../gql'
+import { CreateApplicationForm } from '../applications/CreateApplicationForm'
+import { statusLabels } from '../applications/application-status'
+import { DASHBOARD_QUERY } from '../applications/operations'
 import type { ApplicationFilter, ApplicationStatus } from '../gql/graphql'
 
-const DASHBOARD_QUERY = graphql(`
-  query Dashboard(
-    $first: Int!
-    $after: String
-    $filter: ApplicationFilter
-  ) {
-    me {
-      id
-      email
-      role
-      applications {
-        id
-        status
-      }
-    }
-    applicationPage(first: $first, after: $after, filter: $filter) {
-      edges {
-        cursor
-        node {
-          id
-          role
-          status
-          createdAt
-          company {
-            id
-            name
-          }
-        }
-      }
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
-    }
-  }
-`)
-
 const PAGE_SIZE = 5
-
-const statusLabels: Record<ApplicationStatus, string> = {
-  SAVED: 'Saved',
-  APPLIED: 'Applied',
-  INTERVIEWING: 'Interviewing',
-  REJECTED: 'Rejected',
-  OFFER: 'Offer',
-}
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, {
@@ -70,6 +27,8 @@ export function AuthenticatedHome({ onLogout }: AuthenticatedHomeProps) {
   const [filter, setFilter] = useState<ApplicationFilter | null>(null)
   const [after, setAfter] = useState<string | null>(null)
   const [cursorHistory, setCursorHistory] = useState<Array<string | null>>([])
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [createdMessage, setCreatedMessage] = useState<string | null>(null)
 
   const { data, loading, error } = useQuery(DASHBOARD_QUERY, {
     variables: { first: PAGE_SIZE, after, filter },
@@ -98,6 +57,15 @@ export function AuthenticatedHome({ onLogout }: AuthenticatedHomeProps) {
     setCompany('')
     setRole('')
     resetPagination(null)
+  }
+
+  function handleCreated(createdRole: string) {
+    setStatus('')
+    setCompany('')
+    setRole('')
+    resetPagination(null)
+    setShowCreateForm(false)
+    setCreatedMessage(`${createdRole} was added to your pipeline.`)
   }
 
   function showNextPage() {
@@ -195,8 +163,35 @@ export function AuthenticatedHome({ onLogout }: AuthenticatedHomeProps) {
               <p className="eyebrow">Tracked opportunities</p>
               <h2 id="applications-heading">Applications</h2>
             </div>
-            <span className="page-indicator">Page {cursorHistory.length + 1}</span>
+            <div className="section-actions">
+              <span className="page-indicator">Page {cursorHistory.length + 1}</span>
+              <button
+                aria-expanded={showCreateForm}
+                className="add-application-button"
+                onClick={() => {
+                  setCreatedMessage(null)
+                  setShowCreateForm((visible) => !visible)
+                }}
+                type="button"
+              >
+                {showCreateForm ? 'Close form' : '+ Add application'}
+              </button>
+            </div>
           </div>
+
+          {showCreateForm ? (
+            <CreateApplicationForm
+              onCancel={() => setShowCreateForm(false)}
+              onCreated={handleCreated}
+            />
+          ) : null}
+
+          {createdMessage ? (
+            <div className="success-message" role="status">
+              <span className="status-dot" aria-hidden="true" />
+              {createdMessage}
+            </div>
+          ) : null}
 
           <form className="filter-bar" onSubmit={handleFilter}>
             <label>
