@@ -7,18 +7,12 @@ import type {
   DashboardQueryVariables,
   InterviewType,
 } from '../gql/graphql'
-import {
-  errorMessageClass,
-  eyebrowClass,
-  fieldClass,
-  fieldLabelClass,
-  panelHeadingClass,
-  primaryButtonClass,
-  secondaryButtonClass,
-  statusDotClass,
-  successMessageClass,
-} from '../ui/styles'
+import { Button } from '../ui/Button'
+import { Alert, Spinner } from '../ui/Feedback'
+import { FormField, Input, Select } from '../ui/FormField'
+import { Eyebrow } from '../ui/Typography'
 import { statusLabels } from './application-status'
+import { StatusBadge } from './StatusBadge'
 import {
   ADD_INTERVIEW_MUTATION,
   APPLICATION_DETAIL_QUERY,
@@ -69,30 +63,28 @@ export function ApplicationDetailPanel({
         className="relative z-2 h-full w-full overflow-y-auto bg-paper px-[22px] pt-[52px] pb-[60px] text-ink shadow-[-24px_0_70px_rgb(9_27_21_/_20%)] min-[521px]:w-[min(600px,92vw)] min-[521px]:px-[42px] min-[521px]:pb-[70px]"
         role="dialog"
       >
-        <button
+        <Button
           aria-label="Close application details"
-          className="absolute top-5 right-[22px] grid size-[38px] place-items-center rounded-full border border-line bg-transparent p-0 text-[1.35rem] text-muted"
+          className="absolute top-5 right-[22px] rounded-full border-line text-[1.35rem] text-muted"
           onClick={onClose}
-          type="button"
+          size="icon"
+          variant="secondary"
         >
           ×
-        </button>
+        </Button>
 
         {loading ? (
           <div className="grid min-h-[70vh] place-content-center justify-items-center gap-[15px] text-center">
-            <span
-              className="size-9 animate-spin rounded-full border-[3px] border-[#ccd2ca] border-t-brand"
-              aria-hidden="true"
-            />
+            <Spinner />
             <p>Loading application details…</p>
           </div>
         ) : null}
 
         {error ? (
           <div className="grid min-h-[70vh] place-content-center justify-items-center gap-[15px] text-center">
-            <p className={eyebrowClass}>Unable to load</p>
+            <Eyebrow>Unable to load</Eyebrow>
             <h2
-              className={`${panelHeadingClass} text-[clamp(2.2rem,5vw,3.6rem)]`}
+              className="font-display text-[clamp(2.2rem,5vw,3.6rem)] font-medium tracking-[-0.04em] text-ink"
               id="application-detail-heading"
             >
               Application unavailable
@@ -103,9 +95,9 @@ export function ApplicationDetailPanel({
 
         {!loading && !error && !data?.application ? (
           <div className="grid min-h-[70vh] place-content-center justify-items-center gap-[15px] text-center">
-            <p className={eyebrowClass}>Not found</p>
+            <Eyebrow>Not found</Eyebrow>
             <h2
-              className={`${panelHeadingClass} text-[clamp(2.2rem,5vw,3.6rem)]`}
+              className="font-display text-[clamp(2.2rem,5vw,3.6rem)] font-medium tracking-[-0.04em] text-ink"
               id="application-detail-heading"
             >
               Application unavailable
@@ -261,9 +253,9 @@ function ApplicationDetailContent({
   return (
     <div className="grid gap-[30px]">
       <header className="pr-[30px]">
-        <p className={eyebrowClass}>Application details</p>
+        <Eyebrow>Application details</Eyebrow>
         <h2
-          className={`${panelHeadingClass} text-[clamp(2.2rem,5vw,3.6rem)]`}
+          className="font-display text-[clamp(2.2rem,5vw,3.6rem)] font-medium tracking-[-0.04em] text-ink"
           id="application-detail-heading"
         >
           {application.role}
@@ -271,52 +263,45 @@ function ApplicationDetailContent({
         <p className="mt-3 mb-0 text-[0.84rem] leading-[1.55] text-muted">
           {application.company.name} · Added {formatDateTime(application.createdAt)}
         </p>
+        <div className="mt-4">
+          <StatusBadge status={application.status} />
+        </div>
       </header>
 
-      {notice ? (
-        <div className={successMessageClass} role="status">
-          <span className={statusDotClass} aria-hidden="true" />
-          {notice}
-        </div>
-      ) : null}
+      {notice ? <Alert variant="success">{notice}</Alert> : null}
 
       {mutationError ? (
-        <div className={errorMessageClass} role="alert">
-          {mutationError.message}
-        </div>
+        <Alert variant="error">{mutationError.message}</Alert>
       ) : null}
 
       <form
         className="grid grid-cols-1 gap-4 border-t border-line pt-7 min-[521px]:grid-cols-2"
         onSubmit={handleUpdate}
       >
-        <h3 className={`${panelHeadingClass} text-[1.35rem] min-[521px]:col-span-2`}>
+        <h3 className="font-display text-[1.35rem] font-medium tracking-[-0.04em] text-ink min-[521px]:col-span-2">
           Edit application
         </h3>
-        <label className={fieldLabelClass}>
-          <span>Company</span>
-          <input
-            className={`${fieldClass} h-[46px]`}
+        <FormField label="Company">
+          <Input
+            className="h-[46px]"
             maxLength={120}
             onChange={(event) => setCompanyName(event.target.value)}
             required
             value={companyName}
           />
-        </label>
-        <label className={fieldLabelClass}>
-          <span>Role</span>
-          <input
-            className={`${fieldClass} h-[46px]`}
+        </FormField>
+        <FormField label="Role">
+          <Input
+            className="h-[46px]"
             maxLength={160}
             onChange={(event) => setRole(event.target.value)}
             required
             value={role}
           />
-        </label>
-        <label className={fieldLabelClass}>
-          <span>Status</span>
-          <select
-            className={`${fieldClass} h-[46px]`}
+        </FormField>
+        <FormField label="Status">
+          <Select
+            className="h-[46px]"
             onChange={(event) =>
               setStatus(event.target.value as ApplicationStatus)
             }
@@ -327,20 +312,22 @@ function ApplicationDetailContent({
                 {label}
               </option>
             ))}
-          </select>
-        </label>
-        <button
-          className={`${primaryButtonClass} justify-self-end min-[521px]:col-span-2`}
+          </Select>
+        </FormField>
+        <Button
+          className="justify-self-end min-[521px]:col-span-2"
           disabled={updateResult.loading}
           type="submit"
         >
           {updateResult.loading ? 'Saving…' : 'Save changes'}
-        </button>
+        </Button>
       </form>
 
       <section className="border-t border-line pt-7">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className={`${panelHeadingClass} text-[1.35rem]`}>Interviews</h3>
+          <h3 className="font-display text-[1.35rem] font-medium tracking-[-0.04em] text-ink">
+            Interviews
+          </h3>
           <span className="grid h-7 min-w-7 place-items-center rounded-full bg-brand-soft text-[0.73rem] font-black text-brand">
             {application.interviews.length}
           </span>
@@ -372,10 +359,9 @@ function ApplicationDetailContent({
           className="grid grid-cols-1 gap-3 min-[521px]:grid-cols-[0.8fr_1.2fr]"
           onSubmit={handleAddInterview}
         >
-          <label className={fieldLabelClass}>
-            <span>Type</span>
-            <select
-              className={`${fieldClass} h-[46px]`}
+          <FormField label="Type">
+            <Select
+              className="h-[46px]"
               onChange={(event) =>
                 setInterviewType(event.target.value as InterviewType)
               }
@@ -386,31 +372,31 @@ function ApplicationDetailContent({
                   {label}
                 </option>
               ))}
-            </select>
-          </label>
-          <label className={fieldLabelClass}>
-            <span>Date and time</span>
-            <input
-              className={`${fieldClass} h-[46px]`}
+            </Select>
+          </FormField>
+          <FormField label="Date and time">
+            <Input
+              className="h-[46px]"
               onChange={(event) => setScheduledAt(event.target.value)}
               required
               type="datetime-local"
               value={scheduledAt}
             />
-          </label>
-          <button
-            className={`${secondaryButtonClass} justify-self-end min-[521px]:col-span-2`}
+          </FormField>
+          <Button
+            className="justify-self-end min-[521px]:col-span-2"
             disabled={interviewResult.loading}
             type="submit"
+            variant="secondary"
           >
             {interviewResult.loading ? 'Adding…' : 'Add interview'}
-          </button>
+          </Button>
         </form>
       </section>
 
       <section className="flex flex-col items-stretch justify-between gap-6 border-t border-line pt-7 min-[521px]:flex-row min-[521px]:items-center">
         <div>
-          <h3 className={`${panelHeadingClass} text-[1.35rem]`}>
+          <h3 className="font-display text-[1.35rem] font-medium tracking-[-0.04em] text-ink">
             Delete application
           </h3>
           <p className="mt-1.5 mb-0 text-[0.75rem] text-muted">
@@ -419,31 +405,30 @@ function ApplicationDetailContent({
         </div>
         {confirmDelete ? (
           <div className="flex justify-end gap-2">
-            <button
-              className={secondaryButtonClass}
+            <Button
               disabled={deleteResult.loading}
               onClick={() => setConfirmDelete(false)}
-              type="button"
+              variant="secondary"
             >
               Cancel
-            </button>
-            <button
-              className="min-h-[42px] rounded-[3px] border border-[#a64032] bg-[#a64032] px-[15px] font-extrabold text-white disabled:cursor-wait disabled:opacity-55"
+            </Button>
+            <Button
               disabled={deleteResult.loading}
               onClick={() => void handleDelete()}
-              type="button"
+              size="compact"
+              variant="danger"
             >
               {deleteResult.loading ? 'Deleting…' : 'Confirm delete'}
-            </button>
+            </Button>
           </div>
         ) : (
-          <button
-            className="min-h-[42px] rounded-[3px] border border-[#a64032] bg-[#a64032] px-[15px] font-extrabold text-white disabled:cursor-wait disabled:opacity-55"
+          <Button
             onClick={() => setConfirmDelete(true)}
-            type="button"
+            size="compact"
+            variant="danger"
           >
             Delete
-          </button>
+          </Button>
         )}
       </section>
     </div>

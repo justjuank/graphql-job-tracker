@@ -26,6 +26,7 @@ companies, applications, and interviews in SQLite.
 - Query-depth, recursive-field, and variable-aware complexity limits
 - A React and Apollo Client frontend with bearer-token authentication
 - A responsive Tailwind CSS design system using the official Vite integration
+- Reusable UI primitives and focused dashboard components
 - Schema-validated client operations and generated TypeScript types
 - Creating applications from the client with mutation refetching
 - Optimistic status updates through Apollo's normalized cache

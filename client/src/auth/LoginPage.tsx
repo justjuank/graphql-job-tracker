@@ -2,11 +2,11 @@ import { useMutation } from '@apollo/client/react'
 import { type FormEvent, useState } from 'react'
 
 import { graphql } from '../gql'
-import {
-  errorMessageClass,
-  eyebrowClass,
-  statusDotClass,
-} from '../ui/styles'
+import { BrandMark } from '../ui/Brand'
+import { Button } from '../ui/Button'
+import { Alert, StatusDot } from '../ui/Feedback'
+import { FormField, Input } from '../ui/FormField'
+import { Eyebrow } from '../ui/Typography'
 import { setAccessToken } from './token-storage'
 
 const LOGIN_MUTATION = graphql(`
@@ -60,10 +60,11 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
           className="pointer-events-none absolute -top-[180px] -right-[280px] size-[520px] rounded-full border border-white/15 shadow-[0_0_0_70px_rgb(255_255_255_/_2.5%),0_0_0_140px_rgb(255_255_255_/_1.8%)]"
           aria-hidden="true"
         />
-        <div className="absolute top-[30px] left-8 grid size-12 place-items-center rounded-[14px_4px_14px_4px] bg-lime text-[0.85rem] font-black tracking-[-0.04em] text-brand min-[851px]:top-[42px] min-[851px]:left-[clamp(48px,8vw,120px)]" aria-hidden="true">
-          JT
-        </div>
-        <p className={`${eyebrowClass} text-lime`}>GraphQL portfolio project</p>
+        <BrandMark
+          className="absolute top-[30px] left-8 min-[851px]:top-[42px] min-[851px]:left-[clamp(48px,8vw,120px)]"
+          size="large"
+        />
+        <Eyebrow className="text-lime">GraphQL portfolio project</Eyebrow>
         <h1
           className="relative max-w-[680px] font-display text-[3.2rem] leading-[0.92] font-medium tracking-[-0.045em] min-[521px]:text-[clamp(3.5rem,7vw,6.8rem)]"
           id="welcome-heading"
@@ -93,7 +94,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
 
       <section className="grid place-items-center bg-paper px-8 py-14 min-[851px]:p-12" aria-labelledby="sign-in-heading">
         <div className="w-full max-w-[430px]">
-          <p className={eyebrowClass}>Welcome back</p>
+          <Eyebrow>Welcome back</Eyebrow>
           <h2
             className="max-w-[360px] font-display text-[clamp(2.1rem,4vw,3.2rem)] leading-[1.02] font-medium tracking-[-0.04em] text-ink"
             id="sign-in-heading"
@@ -105,10 +106,13 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
           </p>
 
           <form onSubmit={handleSubmit} className="grid gap-5">
-            <label className="grid gap-2 text-[0.8rem] font-bold text-[#36413b]">
-              <span>Email address</span>
-              <input
-                className="h-[54px] w-full rounded border border-[#cbcfc9] bg-white px-4 text-ink outline-none transition focus:border-brand focus:ring-3 focus:ring-brand/10"
+            <FormField
+              className="text-[#36413b]"
+              label="Email address"
+              labelStyle="standard"
+            >
+              <Input
+                className="h-[54px] rounded px-4"
                 autoComplete="email"
                 name="email"
                 onChange={(event) => setEmail(event.target.value)}
@@ -116,12 +120,15 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
                 type="email"
                 value={email}
               />
-            </label>
+            </FormField>
 
-            <label className="grid gap-2 text-[0.8rem] font-bold text-[#36413b]">
-              <span>Password</span>
-              <input
-                className="h-[54px] w-full rounded border border-[#cbcfc9] bg-white px-4 text-ink outline-none transition focus:border-brand focus:ring-3 focus:ring-brand/10"
+            <FormField
+              className="text-[#36413b]"
+              label="Password"
+              labelStyle="standard"
+            >
+              <Input
+                className="h-[54px] rounded px-4"
                 autoComplete="current-password"
                 minLength={10}
                 name="password"
@@ -130,26 +137,23 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
                 type="password"
                 value={password}
               />
-            </label>
+            </FormField>
 
-            {error ? (
-              <div className={errorMessageClass} role="alert">
-                {error.message}
-              </div>
-            ) : null}
+            {error ? <Alert variant="error">{error.message}</Alert> : null}
 
-            <button
-              className="flex min-h-[54px] items-center justify-between gap-5 rounded bg-brand px-5 font-extrabold text-white transition hover:not-disabled:-translate-y-px hover:not-disabled:bg-brand-hover disabled:cursor-wait disabled:opacity-70"
+            <Button
+              className="w-full justify-between gap-5 rounded font-extrabold hover:not-disabled:-translate-y-px disabled:cursor-wait disabled:opacity-70"
               disabled={loading}
+              size="tall"
               type="submit"
             >
               {loading ? 'Signing in…' : 'Sign in'}
               <span aria-hidden="true">→</span>
-            </button>
+            </Button>
           </form>
 
           <div className="mt-6 flex items-center gap-[9px] text-[0.78rem] text-muted">
-            <span className={statusDotClass} aria-hidden="true" />
+            <StatusDot />
             Local demo account · API on port 4000
           </div>
         </div>
