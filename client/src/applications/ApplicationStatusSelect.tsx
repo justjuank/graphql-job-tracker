@@ -1,7 +1,7 @@
 import { useMutation } from '@apollo/client/react'
 
 import type { ApplicationStatus } from '../gql/graphql'
-import { statusLabels } from './application-status'
+import { statusClasses, statusLabels } from './application-status'
 import {
   DASHBOARD_QUERY,
   UPDATE_APPLICATION_STATUS_MUTATION,
@@ -51,10 +51,10 @@ export function ApplicationStatusSelect({
   }
 
   return (
-    <div className="status-editor">
+    <div className="col-start-2 grid justify-items-start gap-[5px] min-[521px]:col-auto min-[521px]:justify-items-end">
       <select
         aria-label={`Status for ${applicationRole}`}
-        className={`status-select status-${status.toLowerCase()}`}
+        className={`max-w-[150px] justify-self-start rounded-full border-0 px-2.5 py-[7px] text-[0.67rem] font-black tracking-[0.04em] uppercase outline-none focus:ring-3 focus:ring-brand/15 disabled:cursor-wait disabled:opacity-60 min-[521px]:justify-self-end ${statusClasses[status]}`}
         disabled={loading}
         onChange={(event) =>
           void handleChange(event.target.value as ApplicationStatus)
@@ -68,7 +68,11 @@ export function ApplicationStatusSelect({
         ))}
       </select>
       {error ? (
-        <span className="status-error" role="alert" title={error.message}>
+        <span
+          className="text-[0.68rem] font-bold text-[#a33b2d]"
+          role="alert"
+          title={error.message}
+        >
           Update failed
         </span>
       ) : null}
