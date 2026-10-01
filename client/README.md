@@ -28,7 +28,11 @@ credentials, and production deployment never runs the demo seed.
 
 Use **Create an account** on the authentication screen to register a regular
 user. Successful registration stores the returned access token and opens the
-authenticated workspace immediately.
+authenticated workspace immediately. Registration also requires Cloudflare
+Turnstile; copy `.env.example` to `.env.local` to use Cloudflare's published
+development test site key locally.
 
 For a production build, set `VITE_GRAPHQL_URL` to the deployed API's full
-`/graphql` URL before running `npm run build`.
+`/graphql` URL and `VITE_TURNSTILE_SITE_KEY` to the public key for a real
+Turnstile widget before running `npm run build`. Its matching secret belongs
+only on the API and must never use the `VITE_` prefix.

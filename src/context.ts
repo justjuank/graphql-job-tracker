@@ -4,6 +4,7 @@ import type { DatabaseClient } from "./db.js";
 import { createLoaders, type Loaders } from "./loaders.js";
 import type { RegistrationRateLimiter } from "./registration-rate-limiter.js";
 import { ApplicationService } from "./services/application-service.js";
+import type { TurnstileVerification } from "./turnstile.js";
 
 export type CurrentUser = {
   id: string;
@@ -20,6 +21,7 @@ export type GraphQLContext = {
   services: {
     applications: ApplicationService;
     registrationRateLimiter: RegistrationRateLimiter;
+    turnstileVerifier: TurnstileVerification;
   };
 };
 
@@ -28,6 +30,7 @@ export async function createContext(
   authorizationHeader: string | undefined,
   clientIp: string,
   registrationRateLimiter: RegistrationRateLimiter,
+  turnstileVerifier: TurnstileVerification,
 ): Promise<GraphQLContext> {
   const userId = await authenticateBearerToken(authorizationHeader);
   const currentUser = userId
@@ -45,6 +48,7 @@ export async function createContext(
     services: {
       applications: new ApplicationService(prisma),
       registrationRateLimiter,
+      turnstileVerifier,
     },
   };
 }

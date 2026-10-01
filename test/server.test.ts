@@ -18,6 +18,10 @@ import { ApplicationService } from "../src/services/application-service.js";
 const server = createServer();
 const prisma = createPrismaClient(process.env.TEST_DATABASE_URL);
 const registrationRateLimiter = new RegistrationRateLimiter();
+let turnstileVerificationSucceeds = true;
+const turnstileVerifier = {
+  verify: async () => turnstileVerificationSucceeds,
+};
 
 function contextValue(
   observeBatch?: (event: BatchEvent) => void,
@@ -34,6 +38,7 @@ function contextValue(
     services: {
       applications: new ApplicationService(prisma),
       registrationRateLimiter,
+      turnstileVerifier,
     },
   };
 }
@@ -53,6 +58,7 @@ after(async () => {
 
 beforeEach(async () => {
   registrationRateLimiter.clear();
+  turnstileVerificationSucceeds = true;
   await seedDatabase(prisma);
 });
 
@@ -108,6 +114,7 @@ test("registers a user with a normalized email and returns an access token", asy
         input: {
           email: "  NEW.USER@example.com  ",
           password: "a-secure-demo-password",
+          turnstileToken: "valid-test-token",
         },
       },
     },
@@ -124,6 +131,39 @@ test("registers a user with a normalized email and returns an access token", asy
   assert.equal(
     await authenticateBearerToken(`Bearer ${data.register.token}`),
     data.register.user.id,
+  );
+});
+
+test("rejects registration when human verification fails", async () => {
+  turnstileVerificationSucceeds = false;
+
+  const response = await server.executeOperation(
+    {
+      query: `#graphql
+        mutation Register($input: RegisterInput!) {
+          register(input: $input) { user { id } }
+        }
+      `,
+      variables: {
+        input: {
+          email: "bot@example.com",
+          password: "a-secure-demo-password",
+          turnstileToken: "invalid-test-token",
+        },
+      },
+    },
+    { contextValue: contextValue(undefined, "") },
+  );
+
+  assert.equal(response.body.kind, "single");
+  assert.equal(response.body.singleResult.data, null);
+  assert.equal(
+    response.body.singleResult.errors?.[0].extensions?.code,
+    "BAD_USER_INPUT",
+  );
+  assert.equal(
+    await prisma.user.findUnique({ where: { email: "bot@example.com" } }),
+    null,
   );
 });
 
@@ -144,6 +184,7 @@ test("rate limits account creation by client network", async () => {
         input: {
           email: "blocked@example.com",
           password: "a-secure-demo-password",
+          turnstileToken: "valid-test-token",
         },
       },
     },

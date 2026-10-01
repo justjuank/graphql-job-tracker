@@ -72,6 +72,7 @@ export const typeDefs = `#graphql
   input RegisterInput {
     email: String!
     password: String!
+    turnstileToken: String!
   }
 
   input LoginInput {

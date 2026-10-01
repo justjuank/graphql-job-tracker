@@ -32,6 +32,7 @@ export type CreateApplicationInput = {
 export type RegisterInput = {
   email: string;
   password: string;
+  turnstileToken: string;
 };
 
 export type LoginInput = {

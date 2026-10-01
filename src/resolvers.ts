@@ -54,6 +54,10 @@ type CredentialsInput = {
   password: string;
 };
 
+type RegisterInput = CredentialsInput & {
+  turnstileToken: string;
+};
+
 function normalizeEmail(email: string): string {
   const normalized = email.trim().toLowerCase();
 
@@ -169,7 +173,7 @@ export const resolvers = {
   Mutation: {
     register: async (
       _parent: unknown,
-      { input }: { input: CredentialsInput },
+      { input }: { input: RegisterInput },
       { prisma, request, services }: Context,
     ) => {
       const retryAfterSeconds = services.registrationRateLimiter.consume(
@@ -177,6 +181,15 @@ export const resolvers = {
       );
       if (retryAfterSeconds !== null) {
         throw registrationRateLimited(retryAfterSeconds);
+      }
+
+      if (
+        !(await services.turnstileVerifier.verify(
+          input.turnstileToken,
+          request.ip,
+        ))
+      ) {
+        throw badUserInput("Human verification failed. Please try again.");
       }
 
       const email = normalizeEmail(input.email);

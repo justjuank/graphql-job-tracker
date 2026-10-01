@@ -9,10 +9,15 @@ import { createContext } from "./context.js";
 import { createPrismaClient } from "./db.js";
 import { RegistrationRateLimiter } from "./registration-rate-limiter.js";
 import { createServer } from "./server.js";
+import { TurnstileVerifier } from "./turnstile.js";
 
 const config = resolveRuntimeConfig();
 const prisma = createPrismaClient();
 const registrationRateLimiter = new RegistrationRateLimiter();
+const turnstileVerifier = new TurnstileVerifier(
+  config.turnstileSecretKey,
+  config.turnstileExpectedHostname,
+);
 const app = express();
 const httpServer = createHttpServer(app);
 const server = createServer({}, [
@@ -45,6 +50,7 @@ app.use(
         req.headers.authorization,
         req.ip ?? req.socket.remoteAddress ?? "unknown",
         registrationRateLimiter,
+        turnstileVerifier,
       ),
   }),
 );

@@ -22,6 +22,7 @@ users, companies, applications, and interviews in PostgreSQL.
 - Registration and login with hashed passwords and signed access tokens
 - A client account-creation flow with password confirmation and automatic sign-in
 - Lightweight per-IP registration throttling for public deployments
+- Cloudflare Turnstile bot protection with server-side token verification
 - Request authentication and per-user application ownership
 - Declarative field authorization with custom schema directives and roles
 - Thin resolvers backed by a reusable application service
@@ -58,9 +59,12 @@ npm run dev
 npm run dev:client
 ```
 
-Copy `.env.example` to `.env` before starting, and replace `JWT_SECRET` with a
-private value containing at least 32 characters. Docker exposes this project's
-PostgreSQL instance on port 5433 to avoid common conflicts with port 5432.
+Copy `.env.example` to `.env` and `client/.env.example` to `client/.env.local`
+before starting, then replace `JWT_SECRET` with a private value containing at
+least 32 characters. The checked-in Turnstile values are Cloudflare's published
+test keys and are safe only for local development and automated testing. Docker
+exposes this project's PostgreSQL instance on port 5433 to avoid common conflicts
+with port 5432.
 `npm run db:seed:demo` resets only the local database and creates the demo
 account described below. The seed script refuses to run when
 `NODE_ENV=production`.
@@ -129,10 +133,37 @@ Production builds also leave the login fields blank and do not display local
 demo credentials.
 
 To limit automated account creation, the API permits five registration attempts
-per client IP per hour. This intentionally simple in-memory limit is appropriate
-for the single API instance used by this portfolio deployment. Add a shared
-store if the API is ever scaled horizontally, and pair it with Turnstile when
-the public hostname and verification keys are available.
+per client IP per hour and requires a valid Cloudflare Turnstile token. The
+browser obtains the token, but the API independently verifies its signature,
+`register` action, and production hostname before creating a user. The simple
+in-memory rate limit is appropriate for the single API instance used by this
+portfolio deployment; use a shared store if the API is scaled horizontally.
+
+## Deploy the portfolio
+
+[`render.yaml`](render.yaml) defines a free Render web service for the API and a
+free Render static site for the React client. The deployment expects a separate
+Neon PostgreSQL database so application data is not stored on Render's ephemeral
+filesystem.
+
+Before creating the Render Blueprint:
+
+1. Create a Neon project and copy its pooled connection string.
+2. Create a Cloudflare Turnstile widget for the final frontend hostname and copy
+   its site key and secret key.
+3. In Render, create a Blueprint from this repository and provide the prompted
+   secret values:
+   - API `DATABASE_URL`: the Neon connection string.
+   - API `TURNSTILE_SECRET_KEY`: the private Cloudflare secret.
+   - Client `VITE_TURNSTILE_SITE_KEY`: the public Cloudflare site key.
+4. If Render assigns different service hostnames, update `CLIENT_ORIGIN`,
+   `TURNSTILE_EXPECTED_HOSTNAME`, and `VITE_GRAPHQL_URL` in the Blueprint before
+   deploying again. Also add the actual frontend hostname to the Turnstile
+   widget's allowed hostnames.
+
+The API build applies committed Prisma migrations with `prisma migrate deploy`;
+it never runs the demo seed in production. Free services can sleep or scale to
+zero when idle, so the first request after inactivity may take longer.
 
 ## Generate client operation types
 
@@ -483,6 +514,7 @@ src/loaders.ts      Request-scoped relationship batching and caching
 src/pagination.ts   Opaque application cursor encoding and validation
 src/query-protection.ts Depth and variable-aware complexity policies
 src/scalars.ts      DateTime parsing, validation, and serialization
+src/turnstile.ts    Server-side registration challenge verification
 src/seed.ts         Shared, repeatable seed-data function
 src/server.ts       Reusable Apollo Server construction
 src/index.ts        HTTP entry point
@@ -492,6 +524,7 @@ client/             React, Vite, and Apollo Client application
 client/codegen.ts   Client operation validation and type-generation config
 client/src/gql/     Generated typed GraphQL documents and schema types
 client/src/**/*.test.tsx Component tests for authenticated GraphQL workflows
+render.yaml         Render API and static-site deployment blueprint
 prisma/schema.prisma Database models and relationships
 prisma/migrations/  Version-controlled database changes
 test/server.test.ts GraphQL tests against an isolated PostgreSQL database

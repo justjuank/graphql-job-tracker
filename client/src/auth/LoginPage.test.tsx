@@ -3,6 +3,17 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
+vi.mock('../security/Turnstile', async () => {
+  const { useEffect } = await import('react')
+
+  return {
+    Turnstile: ({ onToken }: { onToken: (token: string) => void }) => {
+      useEffect(() => onToken('valid-turnstile-token'), [onToken])
+      return <div aria-label="Human verification" />
+    },
+  }
+})
+
 import { getAccessToken } from './token-storage'
 import { LoginPage } from './LoginPage'
 import { LOGIN_MUTATION, REGISTER_MUTATION } from './operations'
@@ -87,6 +98,7 @@ describe('LoginPage', () => {
     const registration = {
       email: 'new.user@example.com',
       password: 'a-secure-new-password',
+      turnstileToken: 'valid-turnstile-token',
     }
 
     render(

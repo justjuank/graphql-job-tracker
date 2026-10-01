@@ -20,7 +20,7 @@
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
     "pretest": "prisma migrate deploy --config prisma.test.config.ts",
-    "test": "npm run build && node --test dist/test/config.test.js dist/test/server.test.js"
+    "test": "npm run build && node --test dist/test/config.test.js dist/test/server.test.js dist/test/turnstile.test.js"
   },
   "dependencies": {
     "@apollo/server": "^5.0.0",

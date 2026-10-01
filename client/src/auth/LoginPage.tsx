@@ -6,6 +6,7 @@ import { Button } from '../ui/Button'
 import { Alert, StatusDot } from '../ui/Feedback'
 import { FormField, Input } from '../ui/FormField'
 import { Eyebrow } from '../ui/Typography'
+import { Turnstile } from '../security/Turnstile'
 import { LOGIN_MUTATION, REGISTER_MUTATION } from './operations'
 import { setAccessToken } from './token-storage'
 
@@ -24,6 +25,8 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
   )
   const [passwordConfirmation, setPasswordConfirmation] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
+  const [turnstileResetSignal, setTurnstileResetSignal] = useState(0)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [login, loginState] = useMutation(LOGIN_MUTATION)
   const [register, registerState] = useMutation(REGISTER_MUTATION)
 
@@ -39,6 +42,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
     loginState.reset()
     registerState.reset()
     setPasswordConfirmation('')
+    setTurnstileToken(null)
 
     if (nextMode === 'login' && isLocalDemo) {
       setEmail('demo@example.com')
@@ -62,7 +66,13 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
     try {
       if (isRegistering) {
         const result = await register({
-          variables: { input: { email, password } },
+          variables: {
+            input: {
+              email,
+              password,
+              turnstileToken: turnstileToken ?? '',
+            },
+          },
         })
 
         if (result.data?.register.token) {
@@ -80,6 +90,9 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
       }
     } catch {
       // Apollo exposes the error through the mutation result rendered below.
+      if (isRegistering) {
+        setTurnstileResetSignal((signal) => signal + 1)
+      }
     }
   }
 
@@ -197,6 +210,14 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
               </FormField>
             ) : null}
 
+            {isRegistering ? (
+              <Turnstile
+                onToken={setTurnstileToken}
+                resetSignal={turnstileResetSignal}
+                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+              />
+            ) : null}
+
             {formError || requestError ? (
               <Alert variant="error">
                 {formError ?? requestError?.message}
@@ -205,7 +226,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
 
             <Button
               className="w-full justify-between gap-5 rounded font-extrabold hover:not-disabled:-translate-y-px disabled:cursor-wait disabled:opacity-70"
-              disabled={loading}
+              disabled={loading || (isRegistering && !turnstileToken)}
               size="tall"
               type="submit"
             >
