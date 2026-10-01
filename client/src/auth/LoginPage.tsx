@@ -6,7 +6,7 @@ import { Button } from '../ui/Button'
 import { Alert, StatusDot } from '../ui/Feedback'
 import { FormField, Input } from '../ui/FormField'
 import { Eyebrow } from '../ui/Typography'
-import { LOGIN_MUTATION } from './operations'
+import { LOGIN_MUTATION, REGISTER_MUTATION } from './operations'
 import { setAccessToken } from './token-storage'
 
 type LoginPageProps = {
@@ -15,23 +15,64 @@ type LoginPageProps = {
 
 export function LoginPage({ onAuthenticated }: LoginPageProps) {
   const isLocalDemo = import.meta.env.DEV
+  const [mode, setMode] = useState<'login' | 'register'>('login')
   const [email, setEmail] = useState(
     isLocalDemo ? 'demo@example.com' : '',
   )
   const [password, setPassword] = useState(
     isLocalDemo ? 'portfolio-demo-password' : '',
   )
-  const [login, { loading, error }] = useMutation(LOGIN_MUTATION)
+  const [passwordConfirmation, setPasswordConfirmation] = useState('')
+  const [formError, setFormError] = useState<string | null>(null)
+  const [login, loginState] = useMutation(LOGIN_MUTATION)
+  const [register, registerState] = useMutation(REGISTER_MUTATION)
+
+  const isRegistering = mode === 'register'
+  const loading = loginState.loading || registerState.loading
+  const requestError = isRegistering
+    ? registerState.error
+    : loginState.error
+
+  function changeMode(nextMode: 'login' | 'register') {
+    setMode(nextMode)
+    setFormError(null)
+    loginState.reset()
+    registerState.reset()
+    setPasswordConfirmation('')
+
+    if (nextMode === 'login' && isLocalDemo) {
+      setEmail('demo@example.com')
+      setPassword('portfolio-demo-password')
+      return
+    }
+
+    setEmail('')
+    setPassword('')
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    setFormError(null)
+
+    if (isRegistering && password !== passwordConfirmation) {
+      setFormError('Passwords do not match.')
+      return
+    }
 
     try {
-      const result = await login({
-        variables: {
-          input: { email, password },
-        },
-      })
+      if (isRegistering) {
+        const result = await register({
+          variables: { input: { email, password } },
+        })
+
+        if (result.data?.register.token) {
+          setAccessToken(result.data.register.token)
+          onAuthenticated()
+        }
+        return
+      }
+
+      const result = await login({ variables: { input: { email, password } } })
 
       if (result.data?.login.token) {
         setAccessToken(result.data.login.token)
@@ -73,8 +114,8 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
           <div>
             <strong className="text-[0.95rem]">Apollo Client foundation</strong>
             <p className="mt-[7px] mb-0 text-[0.88rem] leading-[1.55] text-[#eef4ed]/65">
-              This login mutation sends credentials to the GraphQL API and
-              stores the returned access token for later operations.
+              Authentication mutations send credentials to the GraphQL API,
+              then store the returned access token for later operations.
             </p>
           </div>
         </div>
@@ -84,17 +125,19 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
         </p>
       </section>
 
-      <section className="grid place-items-center bg-paper px-8 py-14 min-[851px]:p-12" aria-labelledby="sign-in-heading">
+      <section className="grid place-items-center bg-paper px-8 py-14 min-[851px]:p-12" aria-labelledby="auth-heading">
         <div className="w-full max-w-[430px]">
-          <Eyebrow>Welcome back</Eyebrow>
+          <Eyebrow>{isRegistering ? 'Get started' : 'Welcome back'}</Eyebrow>
           <h2
             className="max-w-[360px] font-display text-[clamp(2.1rem,4vw,3.2rem)] leading-[1.02] font-medium tracking-[-0.04em] text-ink"
-            id="sign-in-heading"
+            id="auth-heading"
           >
-            Sign in to your tracker
+            {isRegistering ? 'Create your account' : 'Sign in to your tracker'}
           </h2>
           <p className="mt-[18px] mb-[34px] leading-[1.55] text-muted">
-            {isLocalDemo
+            {isRegistering
+              ? 'Use your email and a password with at least 10 characters.'
+              : isLocalDemo
               ? 'The local demo credentials are filled in so you can explore immediately.'
               : 'Enter the credentials for your account.'}
           </p>
@@ -123,7 +166,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
             >
               <Input
                 className="h-[54px] rounded px-4"
-                autoComplete="current-password"
+                autoComplete={isRegistering ? 'new-password' : 'current-password'}
                 minLength={10}
                 name="password"
                 onChange={(event) => setPassword(event.target.value)}
@@ -133,7 +176,32 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
               />
             </FormField>
 
-            {error ? <Alert variant="error">{error.message}</Alert> : null}
+            {isRegistering ? (
+              <FormField
+                className="text-[#36413b]"
+                label="Confirm password"
+                labelStyle="standard"
+              >
+                <Input
+                  className="h-[54px] rounded px-4"
+                  autoComplete="new-password"
+                  minLength={10}
+                  name="passwordConfirmation"
+                  onChange={(event) =>
+                    setPasswordConfirmation(event.target.value)
+                  }
+                  required
+                  type="password"
+                  value={passwordConfirmation}
+                />
+              </FormField>
+            ) : null}
+
+            {formError || requestError ? (
+              <Alert variant="error">
+                {formError ?? requestError?.message}
+              </Alert>
+            ) : null}
 
             <Button
               className="w-full justify-between gap-5 rounded font-extrabold hover:not-disabled:-translate-y-px disabled:cursor-wait disabled:opacity-70"
@@ -141,10 +209,29 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
               size="tall"
               type="submit"
             >
-              {loading ? 'Signing in…' : 'Sign in'}
+              {loading
+                ? isRegistering
+                  ? 'Creating account…'
+                  : 'Signing in…'
+                : isRegistering
+                  ? 'Create account'
+                  : 'Sign in'}
               <span aria-hidden="true">→</span>
             </Button>
           </form>
+
+          <div className="mt-6 flex items-center justify-between gap-4 border-t border-[#d6ddd7] pt-6 text-sm text-muted">
+            <span>
+              {isRegistering ? 'Already have an account?' : 'New here?'}
+            </span>
+            <Button
+              onClick={() => changeMode(isRegistering ? 'login' : 'register')}
+              size="compact"
+              variant="secondary"
+            >
+              {isRegistering ? 'Sign in instead' : 'Create an account'}
+            </Button>
+          </div>
 
           <div className="mt-6 flex items-center gap-[9px] text-[0.78rem] text-muted">
             <StatusDot />

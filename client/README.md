@@ -26,5 +26,9 @@ The local seeded login is `demo@example.com` with password
 `portfolio-demo-password`. Production builds do not prefill or display these
 credentials, and production deployment never runs the demo seed.
 
+Use **Create an account** on the authentication screen to register a regular
+user. Successful registration stores the returned access token and opens the
+authenticated workspace immediately.
+
 For a production build, set `VITE_GRAPHQL_URL` to the deployed API's full
 `/graphql` URL before running `npm run build`.

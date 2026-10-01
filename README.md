@@ -20,6 +20,7 @@ users, companies, applications, and interviews in PostgreSQL.
 - Partial updates, deletion payloads, and cascading relational deletes
 - GraphQL errors and nullable fields
 - Registration and login with hashed passwords and signed access tokens
+- A client account-creation flow with password confirmation and automatic sign-in
 - Request authentication and per-user application ownership
 - Declarative field authorization with custom schema directives and roles
 - Thin resolvers backed by a reusable application service
@@ -117,7 +118,9 @@ query CurrentUser {
 }
 ```
 
-The React client performs the same flow through Apollo Client. Its
+The React client supports both sign-in and self-service registration through
+Apollo Client. Registration confirms the password in the browser, creates a
+regular `USER` account, and signs the user in with the returned token. Its
 `SetContextLink` reads the current access token from `sessionStorage` for every
 operation and adds the bearer header. Logging out removes the token and clears
 Apollo's normalized cache so cached data cannot leak into a later session.

@@ -22,6 +22,7 @@ type Documents = {
     "\n  mutation AddInterview($input: AddInterviewInput!) {\n    addInterview(input: $input) {\n      id\n      type\n      scheduledAt\n      application {\n        id\n      }\n    }\n  }\n": typeof types.AddInterviewDocument,
     "\n  mutation DeleteApplication($id: ID!) {\n    deleteApplication(id: $id) {\n      deletedApplicationId\n      deletedInterviewCount\n    }\n  }\n": typeof types.DeleteApplicationDocument,
     "\n  mutation Login($input: LoginInput!) {\n    login(input: $input) {\n      token\n      user {\n        id\n        email\n        role\n      }\n    }\n  }\n": typeof types.LoginDocument,
+    "\n  mutation Register($input: RegisterInput!) {\n    register(input: $input) {\n      token\n      user {\n        id\n        email\n        role\n      }\n    }\n  }\n": typeof types.RegisterDocument,
 };
 const documents: Documents = {
     "\n  query Dashboard(\n    $first: Int!\n    $after: String\n    $filter: ApplicationFilter\n  ) {\n    me {\n      id\n      email\n      role\n      applications {\n        id\n        status\n      }\n    }\n    applicationPage(first: $first, after: $after, filter: $filter) {\n      edges {\n        cursor\n        node {\n          id\n          role\n          status\n          createdAt\n          company {\n            id\n            name\n          }\n        }\n      }\n      pageInfo {\n        hasNextPage\n        endCursor\n      }\n    }\n  }\n": types.DashboardDocument,
@@ -32,6 +33,7 @@ const documents: Documents = {
     "\n  mutation AddInterview($input: AddInterviewInput!) {\n    addInterview(input: $input) {\n      id\n      type\n      scheduledAt\n      application {\n        id\n      }\n    }\n  }\n": types.AddInterviewDocument,
     "\n  mutation DeleteApplication($id: ID!) {\n    deleteApplication(id: $id) {\n      deletedApplicationId\n      deletedInterviewCount\n    }\n  }\n": types.DeleteApplicationDocument,
     "\n  mutation Login($input: LoginInput!) {\n    login(input: $input) {\n      token\n      user {\n        id\n        email\n        role\n      }\n    }\n  }\n": types.LoginDocument,
+    "\n  mutation Register($input: RegisterInput!) {\n    register(input: $input) {\n      token\n      user {\n        id\n        email\n        role\n      }\n    }\n  }\n": types.RegisterDocument,
 };
 
 /**
@@ -80,6 +82,10 @@ export function graphql(source: "\n  mutation DeleteApplication($id: ID!) {\n   
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation Login($input: LoginInput!) {\n    login(input: $input) {\n      token\n      user {\n        id\n        email\n        role\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation Login($input: LoginInput!) {\n    login(input: $input) {\n      token\n      user {\n        id\n        email\n        role\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation Register($input: RegisterInput!) {\n    register(input: $input) {\n      token\n      user {\n        id\n        email\n        role\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation Register($input: RegisterInput!) {\n    register(input: $input) {\n      token\n      user {\n        id\n        email\n        role\n      }\n    }\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};
