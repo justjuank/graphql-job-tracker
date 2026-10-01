@@ -7,6 +7,9 @@ React and Apollo Client frontend for the GraphQL Job Tracker API.
 Start the API from the repository root:
 
 ```bash
+npm run db:up
+npm run db:deploy
+npm run db:seed:demo
 npm run dev
 ```
 
@@ -17,7 +20,11 @@ npm run dev:client
 ```
 
 Open <http://localhost:5173>. The Vite development server proxies `/graphql`
-to the API at <http://localhost:4000>.
+to the API at <http://localhost:4000/graphql>.
 
-The seeded login is `demo@example.com` with password
-`portfolio-demo-password`.
+The local seeded login is `demo@example.com` with password
+`portfolio-demo-password`. Production builds do not prefill or display these
+credentials, and production deployment never runs the demo seed.
+
+For a production build, set `VITE_GRAPHQL_URL` to the deployed API's full
+`/graphql` URL before running `npm run build`.

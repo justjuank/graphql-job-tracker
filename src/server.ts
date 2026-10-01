@@ -1,4 +1,5 @@
 import { ApolloServer } from "@apollo/server";
+import type { ApolloServerPlugin } from "@apollo/server";
 import { depthLimit } from "@graphile/depth-limit";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 
@@ -12,7 +13,10 @@ import {
 import { resolvers } from "./resolvers.js";
 import { typeDefs } from "./schema.js";
 
-export function createServer(overrides: Partial<QueryProtectionOptions> = {}) {
+export function createServer(
+  overrides: Partial<QueryProtectionOptions> = {},
+  additionalPlugins: ApolloServerPlugin<GraphQLContext>[] = [],
+) {
   const protection = resolveQueryProtectionOptions(overrides);
   const schema = authorizationDirectiveTransformer(makeExecutableSchema({
     typeDefs,
@@ -30,6 +34,6 @@ export function createServer(overrides: Partial<QueryProtectionOptions> = {}) {
         revealDetails: process.env.NODE_ENV !== "production",
       }),
     ],
-    plugins: [queryComplexityPlugin(schema, protection)],
+    plugins: [queryComplexityPlugin(schema, protection), ...additionalPlugins],
   });
 }

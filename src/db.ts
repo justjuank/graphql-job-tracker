@@ -1,12 +1,16 @@
 import "dotenv/config";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "../generated/prisma/client.js";
 
 export function createPrismaClient(
-  databaseUrl = process.env.DATABASE_URL ?? "file:./dev.db",
+  databaseUrl = process.env.DATABASE_URL,
 ) {
-  const adapter = new PrismaBetterSqlite3({ url: databaseUrl });
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL is required.");
+  }
+
+  const adapter = new PrismaPg({ connectionString: databaseUrl });
   return new PrismaClient({ adapter });
 }
 

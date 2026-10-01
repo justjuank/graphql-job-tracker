@@ -1,21 +1,53 @@
-import { startStandaloneServer } from "@apollo/server/standalone";
+import { expressMiddleware } from "@as-integrations/express5";
+import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
+import cors from "cors";
+import express from "express";
+import { createServer as createHttpServer } from "node:http";
 
+import { resolveRuntimeConfig } from "./config.js";
 import { createContext } from "./context.js";
 import { createPrismaClient } from "./db.js";
 import { createServer } from "./server.js";
 
+const config = resolveRuntimeConfig();
 const prisma = createPrismaClient();
-const server = createServer();
+const app = express();
+const httpServer = createHttpServer(app);
+const server = createServer({}, [
+  ApolloServerPluginDrainHttpServer({ httpServer }),
+]);
 
-const { url } = await startStandaloneServer(server, {
-  listen: { port: 4000 },
-  context: ({ req }) => createContext(prisma, req.headers.authorization),
+app.disable("x-powered-by");
+
+app.get("/health", (_request, response) => {
+  response.status(200).json({ status: "ok" });
 });
 
-console.log(`GraphQL API ready at ${url}`);
+app.get("/", (_request, response) => {
+  response.redirect("/graphql");
+});
+
+await server.start();
+
+app.use(
+  "/graphql",
+  cors({ origin: config.clientOrigins }),
+  express.json(),
+  expressMiddleware(server, {
+    context: ({ req }) => createContext(prisma, req.headers.authorization),
+  }),
+);
+
+await new Promise<void>((resolve, reject) => {
+  httpServer.once("error", reject);
+  httpServer.listen(config.port, "0.0.0.0", resolve);
+});
+
+console.log(`GraphQL API ready at http://localhost:${config.port}/graphql`);
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.once(signal, async () => {
+    await server.stop();
     await prisma.$disconnect();
     process.exit(0);
   });

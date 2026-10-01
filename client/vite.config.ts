@@ -13,7 +13,6 @@ export default defineConfig(({ mode }) => {
         '/graphql': {
           target: environment.API_PROXY_TARGET ?? 'http://localhost:4000',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/graphql/, '/'),
         },
       },
     },

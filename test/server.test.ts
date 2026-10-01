@@ -15,7 +15,7 @@ import { seedDatabase } from "../src/seed.js";
 import { ApplicationService } from "../src/services/application-service.js";
 
 const server = createServer();
-const prisma = createPrismaClient("file:./test.db");
+const prisma = createPrismaClient(process.env.TEST_DATABASE_URL);
 
 function contextValue(
   observeBatch?: (event: BatchEvent) => void,

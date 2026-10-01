@@ -2,7 +2,7 @@
 
 A small portfolio project for learning GraphQL by building a useful job
 application tracker. Apollo Server exposes the GraphQL API, and Prisma stores
-companies, applications, and interviews in SQLite.
+users, companies, applications, and interviews in PostgreSQL.
 
 ## What this version teaches
 
@@ -12,7 +12,7 @@ companies, applications, and interviews in SQLite.
 - Resolver arguments and shared request context
 - Relationships between `JobApplication` and `Company`
 - One-to-many relationships between applications and interviews
-- Persistent data with Prisma and SQLite
+- Persistent data with Prisma and PostgreSQL
 - Database migrations and repeatable seed data
 - Request-scoped batching and caching with DataLoader
 - Cursor pagination and composable application filters
@@ -33,14 +33,17 @@ companies, applications, and interviews in SQLite.
 - Lazy application details, editing, interview scheduling, and deletion
 - Testing operations without opening a network port
 - Component tests with Vitest, Testing Library, and Apollo's mocked provider
+- Express-based production HTTP configuration, health checks, and restricted CORS
+- PostgreSQL-backed CI validation with GitHub Actions
 
 ## Run locally
 
 ```bash
 npm install
 npm --prefix client install
+npm run db:up
 npm run db:deploy
-npm run db:seed
+npm run db:seed:demo
 ```
 
 Start the API and client in separate terminals:
@@ -54,18 +57,24 @@ npm run dev:client
 ```
 
 Copy `.env.example` to `.env` before starting, and replace `JWT_SECRET` with a
-private value containing at least 32 characters. `npm run db:seed` resets the
-local database and creates the demo account described below.
+private value containing at least 32 characters. Docker exposes this project's
+PostgreSQL instance on port 5433 to avoid common conflicts with port 5432.
+`npm run db:seed:demo` resets only the local database and creates the demo
+account described below. The seed script refuses to run when
+`NODE_ENV=production`.
 
-Open <http://localhost:4000> to use Apollo Sandbox.
+Open <http://localhost:4000/graphql> to use Apollo Sandbox.
 Open <http://localhost:5173> to use the React client.
 
-The SQLite database is stored locally in `dev.db`. GraphQL resolvers receive a
-Prisma client through Apollo's request context and use it to query the database.
+GraphQL resolvers receive a PostgreSQL-backed Prisma client through Apollo's
+request context. Run `npm run db:down` when you want to stop the local database;
+its Docker volume preserves the data between runs.
 
 ## Authenticate
 
-Register a new account, or log in with the seeded local account:
+Register a new account, or log in with the seeded local account. The credentials
+below exist only after running the local demo seed and are never created by the
+production migration or deployment path:
 
 ```graphql
 mutation Login($input: LoginInput!) {
@@ -112,6 +121,8 @@ The React client performs the same flow through Apollo Client. Its
 `SetContextLink` reads the current access token from `sessionStorage` for every
 operation and adds the bearer header. Logging out removes the token and clears
 Apollo's normalized cache so cached data cannot leak into a later session.
+Production builds also leave the login fields blank and do not display local
+demo credentials.
 
 ## Generate client operation types
 
@@ -434,6 +445,10 @@ cascade, but does not delete its company.
 
 ## Validate the project
 
+The API integration suite uses the `job_tracker_test` PostgreSQL database from
+the local Docker service. GitHub Actions provisions the same database engine as
+an isolated service container.
+
 ```bash
 npm run typecheck
 npm test
@@ -448,11 +463,12 @@ npm --prefix client run build
 src/schema.ts       GraphQL's public contract
 src/resolvers.ts    GraphQL fields translated into Prisma operations
 src/auth.ts         Password hashing and signed access-token validation
+src/config.ts       Validated production port and allowed client origins
 src/context.ts      Per-request identity, loaders, and services
 src/directives/     Reusable schema authorization enforcement
 src/services/       Business rules and ownership-scoped Prisma mutations
 src/errors.ts       Consistent GraphQL errors and extension codes
-src/db.ts           Prisma client and SQLite adapter construction
+src/db.ts           Prisma client and PostgreSQL adapter construction
 src/loaders.ts      Request-scoped relationship batching and caching
 src/pagination.ts   Opaque application cursor encoding and validation
 src/query-protection.ts Depth and variable-aware complexity policies
@@ -460,13 +476,15 @@ src/scalars.ts      DateTime parsing, validation, and serialization
 src/seed.ts         Shared, repeatable seed-data function
 src/server.ts       Reusable Apollo Server construction
 src/index.ts        HTTP entry point
+compose.yaml        Local PostgreSQL development and test service
+.github/workflows/ci.yml PostgreSQL-backed API and client validation
 client/             React, Vite, and Apollo Client application
 client/codegen.ts   Client operation validation and type-generation config
 client/src/gql/     Generated typed GraphQL documents and schema types
 client/src/**/*.test.tsx Component tests for authenticated GraphQL workflows
 prisma/schema.prisma Database models and relationships
 prisma/migrations/  Version-controlled database changes
-test/server.test.ts GraphQL tests against an isolated SQLite database
+test/server.test.ts GraphQL tests against an isolated PostgreSQL database
 ```
 
 The client tests exercise authenticated queries, mutations, filtering, error

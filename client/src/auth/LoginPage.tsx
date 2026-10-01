@@ -14,8 +14,13 @@ type LoginPageProps = {
 }
 
 export function LoginPage({ onAuthenticated }: LoginPageProps) {
-  const [email, setEmail] = useState('demo@example.com')
-  const [password, setPassword] = useState('portfolio-demo-password')
+  const isLocalDemo = import.meta.env.DEV
+  const [email, setEmail] = useState(
+    isLocalDemo ? 'demo@example.com' : '',
+  )
+  const [password, setPassword] = useState(
+    isLocalDemo ? 'portfolio-demo-password' : '',
+  )
   const [login, { loading, error }] = useMutation(LOGIN_MUTATION)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -89,7 +94,9 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
             Sign in to your tracker
           </h2>
           <p className="mt-[18px] mb-[34px] leading-[1.55] text-muted">
-            The demo credentials are filled in so you can explore immediately.
+            {isLocalDemo
+              ? 'The local demo credentials are filled in so you can explore immediately.'
+              : 'Enter the credentials for your account.'}
           </p>
 
           <form onSubmit={handleSubmit} className="grid gap-5">
@@ -141,7 +148,9 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
 
           <div className="mt-6 flex items-center gap-[9px] text-[0.78rem] text-muted">
             <StatusDot />
-            Local demo account · API on port 4000
+            {isLocalDemo
+              ? 'Local demo account · API on port 4000'
+              : 'Secure bearer-token authentication'}
           </div>
         </div>
       </section>
