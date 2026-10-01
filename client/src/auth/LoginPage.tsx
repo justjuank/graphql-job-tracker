@@ -1,26 +1,13 @@
 import { useMutation } from '@apollo/client/react'
 import { type FormEvent, useState } from 'react'
 
-import { graphql } from '../gql'
 import { BrandMark } from '../ui/Brand'
 import { Button } from '../ui/Button'
 import { Alert, StatusDot } from '../ui/Feedback'
 import { FormField, Input } from '../ui/FormField'
 import { Eyebrow } from '../ui/Typography'
+import { LOGIN_MUTATION } from './operations'
 import { setAccessToken } from './token-storage'
-
-const LOGIN_MUTATION = graphql(`
-  mutation Login($input: LoginInput!) {
-    login(input: $input) {
-      token
-      user {
-        id
-        email
-        role
-      }
-    }
-  }
-`)
 
 type LoginPageProps = {
   onAuthenticated: () => void

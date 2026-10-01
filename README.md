@@ -32,6 +32,7 @@ companies, applications, and interviews in SQLite.
 - Optimistic status updates through Apollo's normalized cache
 - Lazy application details, editing, interview scheduling, and deletion
 - Testing operations without opening a network port
+- Component tests with Vitest, Testing Library, and Apollo's mocked provider
 
 ## Run locally
 
@@ -436,6 +437,9 @@ cascade, but does not delete its company.
 ```bash
 npm run typecheck
 npm test
+npm --prefix client run lint
+npm --prefix client test
+npm --prefix client run build
 ```
 
 ## Project map
@@ -459,10 +463,11 @@ src/index.ts        HTTP entry point
 client/             React, Vite, and Apollo Client application
 client/codegen.ts   Client operation validation and type-generation config
 client/src/gql/     Generated typed GraphQL documents and schema types
+client/src/**/*.test.tsx Component tests for authenticated GraphQL workflows
 prisma/schema.prisma Database models and relationships
 prisma/migrations/  Version-controlled database changes
 test/server.test.ts GraphQL tests against an isolated SQLite database
 ```
 
-The next client milestone adds automated frontend tests for the authenticated
-queries, optimistic mutations, and cache behavior.
+The client tests exercise authenticated queries, mutations, filtering, error
+states, and confirmation flows using deterministic mocked GraphQL responses.
