@@ -23,3 +23,15 @@ export function forbidden(message = "You do not have permission to access this f
     extensions: { code: "FORBIDDEN" },
   });
 }
+
+export function registrationRateLimited(retryAfterSeconds: number): GraphQLError {
+  return new GraphQLError(
+    "Too many registration attempts from this network. Please try again later.",
+    {
+      extensions: {
+        code: "RATE_LIMITED",
+        retryAfterSeconds,
+      },
+    },
+  );
+}

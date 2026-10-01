@@ -6,7 +6,11 @@ import {
   verifyPassword,
 } from "./auth.js";
 import type { GraphQLContext as Context } from "./context.js";
-import { badUserInput, forbidden } from "./errors.js";
+import {
+  badUserInput,
+  forbidden,
+  registrationRateLimited,
+} from "./errors.js";
 import {
   decodeApplicationCursor,
   encodeApplicationCursor,
@@ -166,8 +170,15 @@ export const resolvers = {
     register: async (
       _parent: unknown,
       { input }: { input: CredentialsInput },
-      { prisma }: Context,
+      { prisma, request, services }: Context,
     ) => {
+      const retryAfterSeconds = services.registrationRateLimiter.consume(
+        request.ip,
+      );
+      if (retryAfterSeconds !== null) {
+        throw registrationRateLimited(retryAfterSeconds);
+      }
+
       const email = normalizeEmail(input.email);
       validatePassword(input.password);
 

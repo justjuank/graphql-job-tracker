@@ -7,10 +7,12 @@ import { createServer as createHttpServer } from "node:http";
 import { resolveRuntimeConfig } from "./config.js";
 import { createContext } from "./context.js";
 import { createPrismaClient } from "./db.js";
+import { RegistrationRateLimiter } from "./registration-rate-limiter.js";
 import { createServer } from "./server.js";
 
 const config = resolveRuntimeConfig();
 const prisma = createPrismaClient();
+const registrationRateLimiter = new RegistrationRateLimiter();
 const app = express();
 const httpServer = createHttpServer(app);
 const server = createServer({}, [
@@ -18,6 +20,9 @@ const server = createServer({}, [
 ]);
 
 app.disable("x-powered-by");
+if (config.nodeEnvironment === "production") {
+  app.set("trust proxy", 1);
+}
 
 app.get("/health", (_request, response) => {
   response.status(200).json({ status: "ok" });
@@ -34,7 +39,13 @@ app.use(
   cors({ origin: config.clientOrigins }),
   express.json(),
   expressMiddleware(server, {
-    context: ({ req }) => createContext(prisma, req.headers.authorization),
+    context: ({ req }) =>
+      createContext(
+        prisma,
+        req.headers.authorization,
+        req.ip ?? req.socket.remoteAddress ?? "unknown",
+        registrationRateLimiter,
+      ),
   }),
 );
 

@@ -11,11 +11,13 @@ import {
   type BatchEvent,
 } from "../src/loaders.js";
 import { createServer } from "../src/server.js";
+import { RegistrationRateLimiter } from "../src/registration-rate-limiter.js";
 import { seedDatabase } from "../src/seed.js";
 import { ApplicationService } from "../src/services/application-service.js";
 
 const server = createServer();
 const prisma = createPrismaClient(process.env.TEST_DATABASE_URL);
+const registrationRateLimiter = new RegistrationRateLimiter();
 
 function contextValue(
   observeBatch?: (event: BatchEvent) => void,
@@ -27,9 +29,11 @@ function contextValue(
       ? { id: currentUserId, role: currentUserRole }
       : null,
     prisma,
+    request: { ip: "test-client" },
     loaders: createLoaders(prisma, currentUserId, observeBatch),
     services: {
       applications: new ApplicationService(prisma),
+      registrationRateLimiter,
     },
   };
 }
@@ -48,6 +52,7 @@ after(async () => {
 });
 
 beforeEach(async () => {
+  registrationRateLimiter.clear();
   await seedDatabase(prisma);
 });
 
@@ -119,6 +124,41 @@ test("registers a user with a normalized email and returns an access token", asy
   assert.equal(
     await authenticateBearerToken(`Bearer ${data.register.token}`),
     data.register.user.id,
+  );
+});
+
+test("rate limits account creation by client network", async () => {
+  const now = Date.now();
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    assert.equal(registrationRateLimiter.consume("test-client", now), null);
+  }
+
+  const response = await server.executeOperation(
+    {
+      query: `#graphql
+        mutation Register($input: RegisterInput!) {
+          register(input: $input) { user { id } }
+        }
+      `,
+      variables: {
+        input: {
+          email: "blocked@example.com",
+          password: "a-secure-demo-password",
+        },
+      },
+    },
+    { contextValue: contextValue(undefined, "") },
+  );
+
+  assert.equal(response.body.kind, "single");
+  assert.equal(response.body.singleResult.data, null);
+  assert.equal(
+    response.body.singleResult.errors?.[0].extensions?.code,
+    "RATE_LIMITED",
+  );
+  assert.equal(
+    await prisma.user.findUnique({ where: { email: "blocked@example.com" } }),
+    null,
   );
 });
 

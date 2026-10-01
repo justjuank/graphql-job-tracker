@@ -21,6 +21,7 @@ users, companies, applications, and interviews in PostgreSQL.
 - GraphQL errors and nullable fields
 - Registration and login with hashed passwords and signed access tokens
 - A client account-creation flow with password confirmation and automatic sign-in
+- Lightweight per-IP registration throttling for public deployments
 - Request authentication and per-user application ownership
 - Declarative field authorization with custom schema directives and roles
 - Thin resolvers backed by a reusable application service
@@ -126,6 +127,12 @@ operation and adds the bearer header. Logging out removes the token and clears
 Apollo's normalized cache so cached data cannot leak into a later session.
 Production builds also leave the login fields blank and do not display local
 demo credentials.
+
+To limit automated account creation, the API permits five registration attempts
+per client IP per hour. This intentionally simple in-memory limit is appropriate
+for the single API instance used by this portfolio deployment. Add a shared
+store if the API is ever scaled horizontally, and pair it with Turnstile when
+the public hostname and verification keys are available.
 
 ## Generate client operation types
 
