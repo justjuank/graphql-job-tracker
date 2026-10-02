@@ -24,6 +24,21 @@ const credentials = {
 }
 
 describe('LoginPage', () => {
+  it('presents the product and portfolio attribution', () => {
+    render(
+      <MockedProvider>
+        <LoginPage onAuthenticated={vi.fn()} />
+      </MockedProvider>,
+    )
+
+    expect(screen.getByText('Job application tracker')).toBeInTheDocument()
+    expect(screen.getByText('A portfolio application')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Juan Charria' })).toHaveAttribute(
+      'href',
+      'https://github.com/justjuank/graphql-job-tracker',
+    )
+  })
+
   it('stores the returned token and authenticates the user', async () => {
     const onAuthenticated = vi.fn()
     const user = userEvent.setup()

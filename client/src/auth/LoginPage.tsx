@@ -110,7 +110,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
           className="absolute top-[30px] left-8 min-[851px]:top-[42px] min-[851px]:left-[clamp(48px,8vw,120px)]"
           size="large"
         />
-        <Eyebrow className="text-lime">GraphQL portfolio project</Eyebrow>
+        <Eyebrow className="text-lime">Job application tracker</Eyebrow>
         <h1
           className="relative max-w-[680px] font-display text-[3.2rem] leading-[0.92] font-medium tracking-[-0.045em] min-[521px]:text-[clamp(3.5rem,7vw,6.8rem)]"
           id="welcome-heading"
@@ -123,19 +123,32 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
         </p>
 
         <div className="grid max-w-[570px] grid-cols-1 gap-5 border border-white/15 bg-white/5 p-[22px] backdrop-blur-md min-[521px]:grid-cols-[auto_1fr]">
-          <span className="font-display text-[1.7rem] text-lime">01</span>
+          <span
+            aria-hidden="true"
+            className="font-display text-[1.7rem] text-lime"
+          >
+            ↗
+          </span>
           <div>
-            <strong className="text-[0.95rem]">Apollo Client foundation</strong>
+            <strong className="text-[0.95rem]">A portfolio application</strong>
             <p className="mt-[7px] mb-0 text-[0.88rem] leading-[1.55] text-[#eef4ed]/65">
-              Authentication mutations send credentials to the GraphQL API,
-              then store the returned access token for later operations.
+              Built to demonstrate a production-style GraphQL workflow. Feel
+              free to explore it and use it at your own discretion.
             </p>
           </div>
         </div>
 
-        <p className="absolute bottom-[42px] hidden text-[0.72rem] font-bold tracking-[0.11em] text-[#eef4ed]/45 uppercase min-[851px]:block">
-          React · Apollo Client · TypeScript
-        </p>
+        <footer className="mt-8 text-[0.72rem] font-bold tracking-[0.08em] text-[#eef4ed]/50 uppercase min-[851px]:absolute min-[851px]:bottom-[42px] min-[851px]:mt-0">
+          Built by{' '}
+          <a
+            className="text-[#eef4ed]/75 underline decoration-[#eef4ed]/25 underline-offset-4 transition hover:text-lime hover:decoration-lime"
+            href="https://github.com/justjuank/graphql-job-tracker"
+            rel="noreferrer"
+            target="_blank"
+          >
+            Juan Charria
+          </a>
+        </footer>
       </section>
 
       <section className="grid place-items-center bg-paper px-8 py-14 min-[851px]:p-12" aria-labelledby="auth-heading">
