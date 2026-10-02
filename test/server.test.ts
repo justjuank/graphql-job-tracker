@@ -363,6 +363,7 @@ test("creates an application", async () => {
         mutation CreateApplication($input: CreateApplicationInput!) {
           createApplication(input: $input) {
             role
+            jobPostingUrl
             status
             company { name }
           }
@@ -372,6 +373,7 @@ test("creates an application", async () => {
         input: {
           companyName: "Initech",
           role: "Software Engineer",
+          jobPostingUrl: "https://initech.example/jobs/software-engineer",
           status: "SAVED",
         },
       },
@@ -384,10 +386,39 @@ test("creates an application", async () => {
   assert.deepEqual(asPlainObject(response.body.singleResult.data), {
     createApplication: {
       role: "Software Engineer",
+      jobPostingUrl: "https://initech.example/jobs/software-engineer",
       status: "SAVED",
       company: { name: "Initech" },
     },
   });
+});
+
+test("rejects a job posting URL with an unsafe protocol", async () => {
+  const response = await server.executeOperation(
+    {
+      query: `#graphql
+        mutation CreateApplication($input: CreateApplicationInput!) {
+          createApplication(input: $input) { id }
+        }
+      `,
+      variables: {
+        input: {
+          companyName: "Initech",
+          role: "Software Engineer",
+          jobPostingUrl: "javascript:alert('nope')",
+          status: "SAVED",
+        },
+      },
+    },
+    { contextValue: contextValue() },
+  );
+
+  assert.equal(response.body.kind, "single");
+  assert.equal(response.body.singleResult.data, null);
+  assert.equal(
+    response.body.singleResult.errors?.[0].extensions?.code,
+    "BAD_USER_INPUT",
+  );
 });
 
 test("updates selected application fields and returns a payload", async () => {
@@ -399,6 +430,7 @@ test("updates selected application fields and returns a payload", async () => {
             application {
               id
               role
+              jobPostingUrl
               status
               company { name }
             }
@@ -409,6 +441,7 @@ test("updates selected application fields and returns a payload", async () => {
         id: "application-1",
         input: {
           role: "Senior Backend Engineer",
+          jobPostingUrl: "https://umbrella.example/jobs/backend",
           status: "INTERVIEWING",
           companyName: "Umbrella",
         },
@@ -424,6 +457,7 @@ test("updates selected application fields and returns a payload", async () => {
       application: {
         id: "application-1",
         role: "Senior Backend Engineer",
+        jobPostingUrl: "https://umbrella.example/jobs/backend",
         status: "INTERVIEWING",
         company: { name: "Umbrella" },
       },

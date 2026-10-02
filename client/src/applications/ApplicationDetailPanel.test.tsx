@@ -13,6 +13,7 @@ const application = {
   __typename: 'JobApplication' as const,
   id: 'application-2',
   role: 'Platform Engineer',
+  jobPostingUrl: 'https://globex.example/jobs/platform-engineer',
   status: 'INTERVIEWING' as const,
   createdAt: '2026-09-22T16:30:00.000Z',
   company: {
@@ -52,6 +53,7 @@ describe('ApplicationDetailPanel', () => {
                 input: {
                   companyName: 'Globex',
                   role: 'Senior Platform Engineer',
+                  jobPostingUrl: application.jobPostingUrl,
                   status: 'INTERVIEWING',
                 },
               },
@@ -64,6 +66,7 @@ describe('ApplicationDetailPanel', () => {
                     __typename: 'JobApplication',
                     id: application.id,
                     role: 'Senior Platform Engineer',
+                    jobPostingUrl: application.jobPostingUrl,
                     status: 'INTERVIEWING',
                     company: application.company,
                   },
@@ -86,6 +89,9 @@ describe('ApplicationDetailPanel', () => {
       await screen.findByRole('heading', { name: 'Platform Engineer' }),
     ).toBeInTheDocument()
     expect(screen.getByRole('listitem')).toHaveTextContent('Technical')
+    expect(
+      screen.getByRole('link', { name: 'View job posting ↗' }),
+    ).toHaveAttribute('href', application.jobPostingUrl)
     expect(screen.getByText('Interviewing', { selector: 'span' })).toBeInTheDocument()
 
     const roleInput = screen.getByRole('textbox', { name: 'Role' })

@@ -28,6 +28,7 @@ export async function seedDatabase(prisma: DatabaseClient) {
         create: {
           id: "application-1",
           role: "Backend Engineer",
+          jobPostingUrl: "https://example.com/jobs/backend-engineer",
           status: "APPLIED",
           createdAt: new Date("2026-09-20T14:00:00.000Z"),
           userId: "user-1",
@@ -44,6 +45,7 @@ export async function seedDatabase(prisma: DatabaseClient) {
         create: {
           id: "application-2",
           role: "Platform Engineer",
+          jobPostingUrl: "https://example.com/jobs/platform-engineer",
           status: "INTERVIEWING",
           createdAt: new Date("2026-09-22T16:30:00.000Z"),
           userId: "user-1",

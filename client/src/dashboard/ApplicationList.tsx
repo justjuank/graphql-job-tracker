@@ -32,18 +32,30 @@ function ApplicationRow({
       >
         {application.company.name.charAt(0).toUpperCase()}
       </div>
-      <button
-        className="group grid gap-[5px] border-0 bg-transparent px-0 py-1 text-left text-inherit"
-        onClick={() => onSelect(application.id)}
-        type="button"
-      >
-        <strong className="text-[0.95rem] group-hover:text-accent group-hover:underline group-hover:underline-offset-3 group-focus-visible:text-accent group-focus-visible:underline">
-          {application.role}
-        </strong>
-        <span className="text-[0.75rem] text-muted">
-          {application.company.name}
-        </span>
-      </button>
+      <div className="grid gap-[5px] py-1">
+        <button
+          className="group grid w-fit gap-[5px] border-0 bg-transparent p-0 text-left text-inherit"
+          onClick={() => onSelect(application.id)}
+          type="button"
+        >
+          <strong className="text-[0.95rem] group-hover:text-accent group-hover:underline group-hover:underline-offset-3 group-focus-visible:text-accent group-focus-visible:underline">
+            {application.role}
+          </strong>
+          <span className="text-[0.75rem] text-muted">
+            {application.company.name}
+          </span>
+        </button>
+        {application.jobPostingUrl ? (
+          <a
+            className="w-fit text-[0.72rem] font-extrabold text-accent underline decoration-accent/35 underline-offset-3 hover:decoration-accent"
+            href={application.jobPostingUrl}
+            rel="noreferrer"
+            target="_blank"
+          >
+            View posting ↗
+          </a>
+        ) : null}
+      </div>
       <div className="hidden gap-[5px] min-[851px]:grid">
         <span className="text-[0.75rem] text-muted">Added</span>
         <strong className="text-[0.78rem]">

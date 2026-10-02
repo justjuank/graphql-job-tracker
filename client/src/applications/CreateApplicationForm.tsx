@@ -20,6 +20,7 @@ export function CreateApplicationForm({
 }: CreateApplicationFormProps) {
   const [companyName, setCompanyName] = useState('')
   const [role, setRole] = useState('')
+  const [jobPostingUrl, setJobPostingUrl] = useState('')
   const [status, setStatus] = useState<ApplicationStatus>('SAVED')
   const [createApplication, { loading, error }] = useMutation(
     CREATE_APPLICATION_MUTATION,
@@ -34,6 +35,7 @@ export function CreateApplicationForm({
           input: {
             companyName: companyName.trim(),
             role: role.trim(),
+            jobPostingUrl: jobPostingUrl.trim() || null,
             status,
           },
         },
@@ -109,6 +111,20 @@ export function CreateApplicationForm({
               </option>
             ))}
           </Select>
+        </FormField>
+        <FormField
+          className="min-[521px]:col-span-2 min-[851px]:col-span-3"
+          label="Job posting URL (optional)"
+          tone="dark"
+        >
+          <Input
+            className="h-12 focus:border-lime focus:ring-lime/15"
+            maxLength={2048}
+            onChange={(event) => setJobPostingUrl(event.target.value)}
+            placeholder="https://company.com/jobs/backend-engineer"
+            type="url"
+            value={jobPostingUrl}
+          />
         </FormField>
       </div>
 

@@ -138,6 +138,9 @@ function ApplicationDetailContent({
 }: ApplicationDetailContentProps) {
   const [role, setRole] = useState(application.role)
   const [companyName, setCompanyName] = useState(application.company.name)
+  const [jobPostingUrl, setJobPostingUrl] = useState(
+    application.jobPostingUrl ?? '',
+  )
   const [status, setStatus] = useState<ApplicationStatus>(application.status)
   const [interviewType, setInterviewType] =
     useState<InterviewType>('PHONE_SCREEN')
@@ -164,6 +167,7 @@ function ApplicationDetailContent({
           input: {
             companyName: companyName.trim(),
             role: role.trim(),
+            jobPostingUrl: jobPostingUrl.trim() || null,
             status,
           },
         },
@@ -266,6 +270,16 @@ function ApplicationDetailContent({
         <div className="mt-4">
           <StatusBadge status={application.status} />
         </div>
+        {application.jobPostingUrl ? (
+          <a
+            className="mt-4 inline-flex text-[0.8rem] font-extrabold text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent"
+            href={application.jobPostingUrl}
+            rel="noreferrer"
+            target="_blank"
+          >
+            View job posting ↗
+          </a>
+        ) : null}
       </header>
 
       {notice ? <Alert variant="success">{notice}</Alert> : null}
@@ -313,6 +327,19 @@ function ApplicationDetailContent({
               </option>
             ))}
           </Select>
+        </FormField>
+        <FormField
+          className="min-[521px]:col-span-2"
+          label="Job posting URL (optional)"
+        >
+          <Input
+            className="h-[46px]"
+            maxLength={2048}
+            onChange={(event) => setJobPostingUrl(event.target.value)}
+            placeholder="https://company.com/jobs/backend-engineer"
+            type="url"
+            value={jobPostingUrl}
+          />
         </FormField>
         <Button
           className="justify-self-end min-[521px]:col-span-2"

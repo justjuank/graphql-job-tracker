@@ -10,6 +10,7 @@ const backendApplication = {
   __typename: 'JobApplication' as const,
   id: 'application-1',
   role: 'Backend Engineer',
+  jobPostingUrl: 'https://acme.example/jobs/backend-engineer',
   status: 'APPLIED' as const,
   createdAt: '2026-09-20T15:00:00.000Z',
   company: {
@@ -23,6 +24,7 @@ const platformApplication = {
   __typename: 'JobApplication' as const,
   id: 'application-2',
   role: 'Platform Engineer',
+  jobPostingUrl: null,
   status: 'INTERVIEWING' as const,
   createdAt: '2026-09-22T16:30:00.000Z',
   company: {
@@ -93,6 +95,10 @@ describe('AuthenticatedHome', () => {
     )
 
     expect(await screen.findByText('Backend Engineer')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'View posting ↗' })).toHaveAttribute(
+      'href',
+      backendApplication.jobPostingUrl,
+    )
     expect(screen.getByText('Platform Engineer')).toBeInTheDocument()
     expect(
       screen.getByText('Total applications').closest('article'),

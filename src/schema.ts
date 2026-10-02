@@ -48,6 +48,8 @@ export const typeDefs = `#graphql
   type JobApplication {
     id: ID!
     role: String!
+    "The original job posting associated with this application."
+    jobPostingUrl: String
     status: ApplicationStatus!
     createdAt: DateTime!
     company: Company!
@@ -66,6 +68,7 @@ export const typeDefs = `#graphql
   input CreateApplicationInput {
     companyName: String!
     role: String!
+    jobPostingUrl: String
     status: ApplicationStatus = SAVED
   }
 
@@ -96,6 +99,8 @@ export const typeDefs = `#graphql
     role: String
     status: ApplicationStatus
     companyName: String
+    "Set to null to remove the existing job posting URL."
+    jobPostingUrl: String
   }
 
   type UpdateApplicationPayload {

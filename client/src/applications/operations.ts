@@ -21,6 +21,7 @@ export const DASHBOARD_QUERY = graphql(`
         node {
           id
           role
+          jobPostingUrl
           status
           createdAt
           company {
@@ -42,6 +43,7 @@ export const CREATE_APPLICATION_MUTATION = graphql(`
     createApplication(input: $input) {
       id
       role
+      jobPostingUrl
       status
       createdAt
       company {
@@ -67,6 +69,7 @@ export const APPLICATION_DETAIL_QUERY = graphql(`
     application(id: $id) {
       id
       role
+      jobPostingUrl
       status
       createdAt
       company {
@@ -88,6 +91,7 @@ export const UPDATE_APPLICATION_MUTATION = graphql(`
       application {
         id
         role
+        jobPostingUrl
         status
         company {
           id

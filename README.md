@@ -271,6 +271,7 @@ query ApplicationsByStatus($status: ApplicationStatus) {
   applications(status: $status) {
     id
     role
+    jobPostingUrl
     status
     company {
       name
@@ -310,6 +311,7 @@ Variables:
   "input": {
     "companyName": "Initech",
     "role": "Software Engineer",
+    "jobPostingUrl": "https://initech.example/jobs/software-engineer",
     "status": "SAVED"
   }
 }

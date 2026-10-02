@@ -42,15 +42,16 @@ model Company {
 }
 
 model JobApplication {
-  id         String            @id @default(uuid())
-  role       String
-  status     ApplicationStatus @default(SAVED)
-  createdAt  DateTime          @default(now())
-  companyId  String
-  company    Company           @relation(fields: [companyId], references: [id])
-  interviews Interview[]
-  userId     String
-  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String            @id @default(uuid())
+  role          String
+  jobPostingUrl String?
+  status        ApplicationStatus @default(SAVED)
+  createdAt     DateTime          @default(now())
+  companyId     String
+  company       Company           @relation(fields: [companyId], references: [id])
+  interviews    Interview[]
+  userId        String
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([companyId])
   @@index([status])

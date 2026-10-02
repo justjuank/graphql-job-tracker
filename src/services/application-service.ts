@@ -5,6 +5,7 @@ import { applicationNotFound, badUserInput } from "../errors.js";
 export type CreateApplicationInput = {
   companyName: string;
   role: string;
+  jobPostingUrl?: string | null;
   status: ApplicationStatus;
 };
 
@@ -18,6 +19,7 @@ export type UpdateApplicationInput = {
   role?: string | null;
   status?: ApplicationStatus | null;
   companyName?: string | null;
+  jobPostingUrl?: string | null;
 };
 
 function validateCompanyName(companyName: string) {
@@ -40,12 +42,33 @@ function validateRole(role: string) {
   }
 }
 
+function normalizeJobPostingUrl(value: string | null | undefined) {
+  if (value == null || value.trim() === "") return null;
+
+  const jobPostingUrl = value.trim();
+  if (jobPostingUrl.length > 2048) {
+    throw badUserInput("Job posting URL cannot exceed 2048 characters.");
+  }
+
+  try {
+    const parsedUrl = new URL(jobPostingUrl);
+    if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+      throw new Error("Unsupported URL protocol.");
+    }
+  } catch {
+    throw badUserInput("Job posting URL must be a valid HTTP or HTTPS URL.");
+  }
+
+  return jobPostingUrl;
+}
+
 export class ApplicationService {
   constructor(private readonly prisma: DatabaseClient) {}
 
   create(userId: string, input: CreateApplicationInput) {
     const companyName = input.companyName.trim();
     const role = input.role.trim();
+    const jobPostingUrl = normalizeJobPostingUrl(input.jobPostingUrl);
 
     validateCompanyName(companyName);
     validateRole(role);
@@ -53,6 +76,7 @@ export class ApplicationService {
     return this.prisma.jobApplication.create({
       data: {
         role,
+        jobPostingUrl,
         status: input.status,
         user: { connect: { id: userId } },
         company: {
@@ -98,6 +122,10 @@ export class ApplicationService {
     const existing = await this.requireOwnedApplication(userId, id);
     const role = input.role?.trim();
     const companyName = input.companyName?.trim();
+    const jobPostingUrl =
+      input.jobPostingUrl === undefined
+        ? undefined
+        : normalizeJobPostingUrl(input.jobPostingUrl);
 
     if (role !== undefined) validateRole(role);
     if (companyName !== undefined) validateCompanyName(companyName);
@@ -106,6 +134,7 @@ export class ApplicationService {
       where: { id },
       data: {
         role,
+        jobPostingUrl,
         status: input.status ?? undefined,
         company:
           companyName !== undefined
