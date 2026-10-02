@@ -1,196 +1,103 @@
 # GraphQL Job Tracker
 
-A small portfolio project for learning GraphQL by building a useful job
-application tracker. Apollo Server exposes the GraphQL API, and Prisma stores
-users, companies, applications, and interviews in PostgreSQL.
+A production-style job application tracker built to demonstrate a complete
+GraphQL workflow: schema design, typed client operations, authentication,
+authorization, relational data, pagination, caching, testing, and deployment.
 
-## What this version teaches
+[![CI](https://github.com/justjuank/graphql-job-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/justjuank/graphql-job-tracker/actions/workflows/ci.yml)
+[![Live app](https://img.shields.io/badge/live_app-open-174c3c)](https://justjuank-graphql-job-tracker.onrender.com/)
+[![GraphQL](https://img.shields.io/badge/GraphQL-Apollo-E10098?logo=graphql)](https://www.apollographql.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-- A GraphQL schema as the API contract
-- Object types, enums, input types, queries, and mutations
-- Root and field resolvers
-- Resolver arguments and shared request context
-- Relationships between `JobApplication` and `Company`
-- One-to-many relationships between applications and interviews
-- Persistent data with Prisma and PostgreSQL
-- Database migrations and repeatable seed data
-- Request-scoped batching and caching with DataLoader
-- Cursor pagination and composable application filters
-- A custom `DateTime` scalar with input coercion and UTC serialization
-- Partial updates, deletion payloads, and cascading relational deletes
-- GraphQL errors and nullable fields
-- Registration and login with hashed passwords and signed access tokens
-- A client account-creation flow with password confirmation and automatic sign-in
-- Lightweight per-IP registration throttling for public deployments
-- Cloudflare Turnstile bot protection with server-side token verification
-- Request authentication and per-user application ownership
-- Declarative field authorization with custom schema directives and roles
-- Thin resolvers backed by a reusable application service
-- Query-depth, recursive-field, and variable-aware complexity limits
-- A React and Apollo Client frontend with bearer-token authentication
-- A responsive Tailwind CSS design system using the official Vite integration
-- Reusable UI primitives and focused dashboard components
-- Schema-validated client operations and generated TypeScript types
-- Creating applications from the client with mutation refetching
+**[Open the live application](https://justjuank-graphql-job-tracker.onrender.com/)** ·
+**[API health check](https://justjuank-graphql-job-tracker-api.onrender.com/health)**
+
+> The API runs on Render's free tier and may need about a minute to wake after
+> a period of inactivity. Production has no seeded demo account; create your
+> own account from the registration screen.
+
+## Product preview
+
+| Sign in | Protected registration |
+| --- | --- |
+| <img src="docs/images/sign-in.jpg" alt="Job Tracker sign-in screen" width="420"> | <img src="docs/images/registration.jpg" alt="Job Tracker registration screen with Cloudflare Turnstile" width="420"> |
+
+Once authenticated, users can create and filter applications, track the
+original job-posting URL, update each opportunity's status, schedule interviews,
+and delete applications from a responsive dashboard.
+
+## What this project demonstrates
+
+- Schema-first GraphQL API with queries, mutations, enums, input types,
+  relationships, payloads, nullability, and a custom `DateTime` scalar
+- React and Apollo Client frontend with generated typed documents—no
+  handwritten mirror types for operation results or variables
+- PostgreSQL persistence through Prisma with version-controlled migrations
+- Registration and login using salted password hashes and signed access tokens
+- Per-user record ownership plus declarative `@authenticated` and
+  `@requiresRole` authorization directives
+- Request-scoped DataLoader batching to prevent relationship N+1 queries
+- Cursor-based pagination with composable status, company, and role filters
 - Optimistic status updates through Apollo's normalized cache
-- Lazy application details, editing, interview scheduling, and deletion
-- Testing operations without opening a network port
-- Component tests with Vitest, Testing Library, and Apollo's mocked provider
-- Express-based production HTTP configuration, health checks, and restricted CORS
-- PostgreSQL-backed CI validation with GitHub Actions
+- Query depth, recursive-field, node-count, and variable-aware complexity limits
+- Cloudflare Turnstile and per-IP registration throttling for public deployment
+- API integration tests and React component tests in PostgreSQL-backed CI
+- Automatic deployment of the API and static client through a Render Blueprint
 
-## Run locally
+## Architecture
 
-```bash
-npm install
-npm --prefix client install
-npm run db:up
-npm run db:deploy
-npm run db:seed:demo
+```mermaid
+flowchart LR
+    Browser[React + Apollo Client]
+    API[Express + Apollo Server]
+    Policy[Auth directives + query protection]
+    Resolvers[Thin resolvers]
+    Services[Application service]
+    Loaders[Request-scoped DataLoaders]
+    Prisma[Prisma ORM]
+    DB[(Neon PostgreSQL)]
+    Turnstile[Cloudflare Turnstile]
+
+    Browser -->|typed GraphQL operations| API
+    API --> Policy
+    Policy --> Resolvers
+    Resolvers --> Services
+    Resolvers --> Loaders
+    Services --> Prisma
+    Loaders --> Prisma
+    Prisma --> DB
+    Browser -->|registration challenge| Turnstile
+    API -->|server-side token verification| Turnstile
 ```
 
-Start the API and client in separate terminals:
+The GraphQL schema is the shared contract. Apollo Server exposes that contract,
+while GraphQL Code Generator validates the client's operations against it and
+produces `TypedDocumentNode` values. Prisma remains behind services and loaders;
+the React client never knows how the data is stored.
 
-```bash
-npm run dev
-```
+## Technology stack
 
-```bash
-npm run dev:client
-```
+| Layer | Technology |
+| --- | --- |
+| Client | React 19, Apollo Client, TypeScript, Vite, Tailwind CSS |
+| API | Node.js, Express 5, Apollo Server 5, GraphQL.js |
+| Data | Prisma, PostgreSQL, DataLoader |
+| Security | Signed bearer tokens, scrypt, schema directives, Turnstile |
+| Quality | Node test runner, Vitest, Testing Library, GraphQL Code Generator, oxlint |
+| Delivery | GitHub Actions, Render, Neon |
 
-Copy `.env.example` to `.env` and `client/.env.example` to `client/.env.local`
-before starting, then replace `JWT_SECRET` with a private value containing at
-least 32 characters. The checked-in Turnstile values are Cloudflare's published
-test keys and are safe only for local development and automated testing. Docker
-exposes this project's PostgreSQL instance on port 5433 to avoid common conflicts
-with port 5432.
-`npm run db:seed:demo` resets only the local database and creates the demo
-account described below. The seed script refuses to run when
-`NODE_ENV=production`.
+## Key engineering decisions
 
-Open <http://localhost:4000/graphql> to use Apollo Sandbox.
-Open <http://localhost:5173> to use the React client.
+### Thin resolvers, explicit services
 
-GraphQL resolvers receive a PostgreSQL-backed Prisma client through Apollo's
-request context. Run `npm run db:down` when you want to stop the local database;
-its Docker volume preserves the data between runs.
+Resolvers translate GraphQL fields into application calls. Validation,
+ownership checks, and mutation rules live in `ApplicationService`, which keeps
+business behavior reusable without adding a repository layer that would merely
+mirror Prisma.
 
-## Authenticate
+### Authorization at two levels
 
-Register a new account, or log in with the seeded local account. The credentials
-below exist only after running the local demo seed and are never created by the
-production migration or deployment path:
-
-```graphql
-mutation Login($input: LoginInput!) {
-  login(input: $input) {
-    token
-    user { id email }
-  }
-}
-```
-
-```json
-{
-  "input": {
-    "email": "demo@example.com",
-    "password": "portfolio-demo-password"
-  }
-}
-```
-
-Copy the returned token into Postman's **Authorization > Bearer Token** field,
-or send this HTTP header:
-
-```text
-Authorization: Bearer YOUR_TOKEN
-```
-
-You can now call protected fields such as `me`, `applications`, and all
-application mutations. Each application belongs to a user; resolvers and
-relationship loaders only expose records owned by the authenticated user. The
-access token expires after one hour. Passwords are stored as salted scrypt
-hashes, never as plaintext.
-
-```graphql
-query CurrentUser {
-  me {
-    id
-    email
-    applications { id role status }
-  }
-}
-```
-
-The React client supports both sign-in and self-service registration through
-Apollo Client. Registration confirms the password in the browser, creates a
-regular `USER` account, and signs the user in with the returned token. Its
-`SetContextLink` reads the current access token from `sessionStorage` for every
-operation and adds the bearer header. Logging out removes the token and clears
-Apollo's normalized cache so cached data cannot leak into a later session.
-Production builds also leave the login fields blank and do not display local
-demo credentials.
-
-To limit automated account creation, the API permits five registration attempts
-per client IP per hour and requires a valid Cloudflare Turnstile token. The
-browser obtains the token, but the API independently verifies its signature,
-`register` action, and production hostname before creating a user. The simple
-in-memory rate limit is appropriate for the single API instance used by this
-portfolio deployment; use a shared store if the API is scaled horizontally.
-
-## Deploy the portfolio
-
-[`render.yaml`](render.yaml) defines a free Render web service for the API and a
-free Render static site for the React client. The deployment expects a separate
-Neon PostgreSQL database so application data is not stored on Render's ephemeral
-filesystem.
-
-Before creating the Render Blueprint:
-
-1. Create a Neon project and copy its pooled connection string.
-2. Create a Cloudflare Turnstile widget for the final frontend hostname and copy
-   its site key and secret key.
-3. In Render, create a Blueprint from this repository and provide the prompted
-   secret values:
-   - API `DATABASE_URL`: the Neon connection string.
-   - API `TURNSTILE_SECRET_KEY`: the private Cloudflare secret.
-   - Client `VITE_TURNSTILE_SITE_KEY`: the public Cloudflare site key.
-4. If Render assigns different service hostnames, update `CLIENT_ORIGIN`,
-   `TURNSTILE_EXPECTED_HOSTNAME`, and `VITE_GRAPHQL_URL` in the Blueprint before
-   deploying again. Also add the actual frontend hostname to the Turnstile
-   widget's allowed hostnames.
-
-The API build applies committed Prisma migrations with `prisma migrate deploy`;
-it never runs the demo seed in production. Free services can sleep or scale to
-zero when idle, so the first request after inactivity may take longer.
-
-## Generate client operation types
-
-The client uses GraphQL Code Generator's client preset. It reads the server's
-`typeDefs` directly from `src/schema.ts`, validates every client operation, and
-generates typed documents in `client/src/gql/`.
-
-```bash
-npm --prefix client run codegen
-```
-
-Generation runs automatically before `dev` and `build`. While editing several
-operations, run the watcher in a separate terminal:
-
-```bash
-npm --prefix client run codegen:watch
-```
-
-Files in `client/src/gql/` are generated artifacts and should not be edited by
-hand. Components use the generated `graphql()` function, allowing Apollo hooks
-to infer operation results and variables without handwritten mirror types.
-
-## Authorization directives and services
-
-Authentication happens once per HTTP request in `src/context.ts`. The resulting
-user identity and role are available to every resolver. Protected fields declare
-their access policy directly in the GraphQL schema:
+Schema directives enforce broad field policies:
 
 ```graphql
 type Query {
@@ -199,177 +106,23 @@ type Query {
 }
 ```
 
-The directive transformer in `src/directives/authorization.ts` wraps those
-fields before Apollo starts. Anonymous callers receive `UNAUTHENTICATED`, while
-signed-in users without the required role receive `FORBIDDEN`.
+The service layer separately scopes every application lookup by the current
+user. A valid token therefore cannot be used to read or mutate another user's
+records by guessing an ID.
 
-Directives handle coarse field access. Record-specific rules remain in
-`ApplicationService`: every mutation receives the acting user's ID and scopes
-its Prisma lookup to that owner. This prevents one user from learning about or
-changing another user's applications even if the service is called outside
-GraphQL.
+### Batching relationship fields
 
-The seeded demo user has the `ADMIN` role, so this query succeeds with its
-bearer token:
+GraphQL field resolvers make nested data convenient, but resolving `company`
+and `interviews` once per application can create an N+1 query pattern.
+Request-scoped DataLoaders collect keys during one execution turn and replace
+those individual lookups with set-based Prisma queries. Their caches are
+discarded after every request and never shared between users.
 
-```graphql
-query AdminUsers {
-  users {
-    id
-    email
-    role
-  }
-}
-```
+### Cursor pagination
 
-## Query depth and complexity protection
-
-GraphQL clients choose their own response shape, so the server validates the
-cost of an operation before running any resolver. `src/query-protection.ts`
-provides two complementary protections:
-
-- A static validation rule limits selection depth, nested lists, repeated
-  traversal of the same field, and total query nodes.
-- An Apollo `didResolveOperation` plugin calculates request-specific complexity
-  after variables are available but before execution starts.
-
-List fields use estimated result-size multipliers. The cursor connection uses
-its actual `first` argument, so requesting a larger page costs more even when
-`first` is supplied through a variable. Requests over the budget return a
-`QUERY_TOO_COMPLEX` error. Introspection has separate depth protection and is
-kept available for Apollo Sandbox and Postman's schema autocomplete.
-
-The defaults can be tuned without changing code:
-
-```dotenv
-GRAPHQL_MAX_DEPTH="8"
-GRAPHQL_MAX_LIST_DEPTH="3"
-GRAPHQL_MAX_SELF_REFERENTIAL_DEPTH="2"
-GRAPHQL_MAX_COMPLEXITY="200"
-GRAPHQL_MAX_QUERY_NODES="1000"
-```
-
-Complexity is a protective estimate, not a measurement of database time. It
-should be tuned using observed production operations and combined with
-pagination, rate limiting, request-size limits, and execution timeouts.
-
-To inspect and edit the records visually, run:
-
-```bash
-npm run db:studio
-```
-
-After changing `prisma/schema.prisma`, create a new development migration with
-`npm run db:migrate -- --name describe_your_change`.
-
-## Try a query
-
-The remaining examples require the bearer token from the authentication step.
-
-```graphql
-query ApplicationsByStatus($status: ApplicationStatus) {
-  applications(status: $status) {
-    id
-    role
-    jobPostingUrl
-    status
-    company {
-      name
-    }
-  }
-}
-```
-
-Variables:
-
-```json
-{
-  "status": "INTERVIEWING"
-}
-```
-
-## Try a mutation
-
-```graphql
-mutation CreateApplication($input: CreateApplicationInput!) {
-  createApplication(input: $input) {
-    id
-    role
-    status
-    createdAt
-    company {
-      name
-    }
-  }
-}
-```
-
-Variables:
-
-```json
-{
-  "input": {
-    "companyName": "Initech",
-    "role": "Software Engineer",
-    "jobPostingUrl": "https://initech.example/jobs/software-engineer",
-    "status": "SAVED"
-  }
-}
-```
-
-## Query a nested relationship
-
-`interviews` is not a root query. GraphQL reaches it through its field resolver
-on `JobApplication`, and that resolver runs only when this field is selected.
-
-```graphql
-query ApplicationWithInterviews($id: ID!) {
-  application(id: $id) {
-    role
-    interviews {
-      type
-      scheduledAt
-    }
-  }
-}
-```
-
-Variables:
-
-```json
-{
-  "id": "application-2"
-}
-```
-
-## Relationship batching and the N+1 problem
-
-When a list query returns two applications, resolving `company` and
-`interviews` independently could produce one root query plus two company
-queries plus two interview queries. As the list grows, the relationship-query
-count grows with it.
-
-The loaders in `src/loaders.ts` collect relationship keys during one GraphQL
-request and issue set-based Prisma queries. This query therefore uses one
-application query, one batched company query, and one batched interview query:
-
-```graphql
-query ApplicationsWithRelationships {
-  applications {
-    role
-    company { name }
-    interviews { type }
-  }
-}
-```
-
-Loaders are created inside Apollo's context function, so their memoized values
-are discarded after each HTTP request. Caches are never shared between users.
-
-## Filter and paginate applications
-
-`applicationPage` is a connection-style field. Request `first` records, then
-pass the returned `endCursor` as `after` to retrieve the next page.
+`applicationPage` returns edges and `pageInfo` rather than relying on numeric
+offsets. The opaque cursor gives clients a stable continuation point while
+allowing the API to change its internal representation later.
 
 ```graphql
 query ApplicationPage(
@@ -383,114 +136,137 @@ query ApplicationPage(
       node {
         id
         role
+        jobPostingUrl
         status
         company { name }
       }
     }
-    pageInfo {
-      hasNextPage
-      endCursor
-    }
+    pageInfo { hasNextPage endCursor }
   }
 }
 ```
 
-Variables for the first page:
+### Generated client types
 
-```json
-{
-  "first": 1,
-  "filter": {
-    "status": "INTERVIEWING",
-    "companyNameContains": "Glob"
-  }
-}
+Client operations live beside the features that consume them. GraphQL Code
+Generator reads `src/schema.ts`, validates every operation, and generates typed
+documents in `client/src/gql/`. Apollo hooks then infer both result and variable
+types directly from each document.
+
+```bash
+npm --prefix client run codegen
 ```
 
-For the next page, copy `pageInfo.endCursor` into an `after` variable. Cursors
-are opaque client tokens: clients should store and return them without decoding
-or constructing them.
+Generated files should not be edited by hand. Generation runs automatically
+before client development and production builds.
 
-## Schedule an interview
+### Defense in depth
 
-`scheduledAt` is a `DateTime`, not a generic `String`. Inputs must include an
-ISO-8601 time and timezone, such as `2026-10-01T10:30:00-05:00`. Resolvers
-receive a validated JavaScript `Date`, and responses are normalized to UTC.
+The public API combines several small controls:
+
+- Strict request authentication and ownership checks
+- Role authorization through transformed schema directives
+- Depth, recursive traversal, node-count, and operation-complexity limits
+- Page-size-aware cost calculation using GraphQL variables
+- Restricted production CORS and request-size limits
+- Turnstile verification plus registration throttling
+- HTTP/HTTPS-only validation for user-supplied job-posting links
+
+Schema introspection remains available in local development for Apollo Sandbox
+and Postman autocomplete, but is disabled in production.
+
+## Run locally
+
+### Prerequisites
+
+- Node.js 20 or newer
+- Docker Desktop
+- npm
+
+### 1. Configure the environment
+
+Copy `.env.example` to `.env` and `client/.env.example` to
+`client/.env.local`. Replace `JWT_SECRET` with a private value containing at
+least 32 characters. The checked-in Turnstile values are Cloudflare's published
+test keys and are intended only for local development and automated testing.
+
+### 2. Install and prepare the database
+
+```bash
+npm install
+npm --prefix client install
+npm run db:up
+npm run db:deploy
+npm run db:seed:demo
+```
+
+Docker exposes PostgreSQL on port `5433` to avoid common conflicts with a local
+instance on `5432`. The demo seed resets only the local database and refuses to
+run when `NODE_ENV=production`.
+
+### 3. Start both applications
+
+Run the API and client in separate terminals:
+
+```bash
+npm run dev
+```
+
+```bash
+npm run dev:client
+```
+
+- React client: <http://localhost:5173>
+- GraphQL endpoint and Apollo Sandbox: <http://localhost:4000/graphql>
+- Health check: <http://localhost:4000/health>
+
+The local seed creates this development-only account:
+
+```text
+Email: demo@example.com
+Password: portfolio-demo-password
+```
+
+Run `npm run db:down` when finished. The Docker volume preserves data between
+runs.
+
+## Example mutation
+
+Protected operations require the token returned by `login` or `register` as a
+bearer token.
 
 ```graphql
-mutation AddInterview($input: AddInterviewInput!) {
-  addInterview(input: $input) {
-    type
-    scheduledAt
-    application {
-      role
-      company {
-        name
-      }
-    }
+mutation CreateApplication($input: CreateApplicationInput!) {
+  createApplication(input: $input) {
+    id
+    role
+    jobPostingUrl
+    status
+    company { name }
   }
 }
 ```
-
-Variables:
 
 ```json
 {
   "input": {
-    "applicationId": "application-1",
-    "type": "PHONE_SCREEN",
-    "scheduledAt": "2026-10-01T10:30:00-05:00"
+    "companyName": "Initech",
+    "role": "Software Engineer",
+    "jobPostingUrl": "https://initech.example/jobs/software-engineer",
+    "status": "SAVED"
   }
 }
 ```
 
-## Update and delete applications
+For partial updates, omitted fields remain unchanged. The required fields reject
+explicit `null`; the optional `jobPostingUrl` intentionally accepts `null` so a
+user can remove an existing link.
 
-Omitted update fields remain unchanged. Explicit `null` values are rejected so
-the mutation's behavior is unambiguous.
+## Test and validate
 
-```graphql
-mutation UpdateApplication($id: ID!, $input: UpdateApplicationInput!) {
-  updateApplication(id: $id, input: $input) {
-    application {
-      id
-      role
-      status
-      company { name }
-    }
-  }
-}
-```
-
-```json
-{
-  "id": "application-1",
-  "input": {
-    "role": "Senior Backend Engineer",
-    "status": "INTERVIEWING"
-  }
-}
-```
-
-Deletion returns structured information rather than a bare boolean:
-
-```graphql
-mutation DeleteApplication($id: ID!) {
-  deleteApplication(id: $id) {
-    deletedApplicationId
-    deletedInterviewCount
-  }
-}
-```
-
-Deleting an application removes its interviews through the database foreign-key
-cascade, but does not delete its company.
-
-## Validate the project
-
-The API integration suite uses the `job_tracker_test` PostgreSQL database from
-the local Docker service. GitHub Actions provisions the same database engine as
-an isolated service container.
+The integration suite uses the `job_tracker_test` PostgreSQL database from the
+local Docker service. GitHub Actions provisions the same database engine as an
+isolated service container.
 
 ```bash
 npm run typecheck
@@ -500,37 +276,52 @@ npm --prefix client test
 npm --prefix client run build
 ```
 
+The current suites cover authentication, authorization, owner isolation,
+pagination, filtering, relationship batching, query protection, Turnstile
+verification, GraphQL errors, cache behavior, and the principal UI workflows.
+
+## Production deployment
+
+[`render.yaml`](render.yaml) declares two Render services:
+
+- A Node web service for the GraphQL API
+- A static site for the React application
+
+The API connects to Neon PostgreSQL and applies committed migrations with
+`prisma migrate deploy`; production never runs the demo seed. Cloudflare
+Turnstile protects self-service registration. Pushes to `main` run the full
+GitHub Actions validation workflow before Render deploys the new version.
+
+Required production secrets are configured in the hosting dashboards and are
+not committed:
+
+- `DATABASE_URL`
+- `JWT_SECRET`
+- `TURNSTILE_SECRET_KEY`
+- `VITE_TURNSTILE_SITE_KEY`
+
 ## Project map
 
 ```text
-src/schema.ts       GraphQL's public contract
-src/resolvers.ts    GraphQL fields translated into Prisma operations
-src/auth.ts         Password hashing and signed access-token validation
-src/config.ts       Validated production port and allowed client origins
-src/context.ts      Per-request identity, loaders, and services
-src/directives/     Reusable schema authorization enforcement
-src/services/       Business rules and ownership-scoped Prisma mutations
-src/errors.ts       Consistent GraphQL errors and extension codes
-src/db.ts           Prisma client and PostgreSQL adapter construction
-src/loaders.ts      Request-scoped relationship batching and caching
-src/pagination.ts   Opaque application cursor encoding and validation
-src/query-protection.ts Depth and variable-aware complexity policies
-src/scalars.ts      DateTime parsing, validation, and serialization
-src/turnstile.ts    Server-side registration challenge verification
-src/seed.ts         Shared, repeatable seed-data function
-src/server.ts       Reusable Apollo Server construction
-src/index.ts        HTTP entry point
-compose.yaml        Local PostgreSQL development and test service
-.github/workflows/ci.yml PostgreSQL-backed API and client validation
-client/             React, Vite, and Apollo Client application
-client/codegen.ts   Client operation validation and type-generation config
-client/src/gql/     Generated typed GraphQL documents and schema types
-client/src/**/*.test.tsx Component tests for authenticated GraphQL workflows
-render.yaml         Render API and static-site deployment blueprint
-prisma/schema.prisma Database models and relationships
-prisma/migrations/  Version-controlled database changes
-test/server.test.ts GraphQL tests against an isolated PostgreSQL database
+src/schema.ts              GraphQL contract
+src/resolvers.ts           Root and relationship resolvers
+src/context.ts             Per-request identity, loaders, and services
+src/directives/            Authentication and role enforcement
+src/services/              Validation and ownership-scoped mutations
+src/loaders.ts             Request-scoped relationship batching
+src/pagination.ts          Opaque cursor encoding and validation
+src/query-protection.ts    Depth and variable-aware complexity policies
+src/turnstile.ts           Server-side challenge verification
+client/src/applications/   Application operations and workflows
+client/src/dashboard/      Filters, summaries, list, and pagination
+client/src/gql/            Generated typed GraphQL documents
+prisma/                    Schema and version-controlled migrations
+test/                      PostgreSQL-backed API integration tests
+.github/workflows/ci.yml   API and client validation
+render.yaml                Production deployment blueprint
 ```
 
-The client tests exercise authenticated queries, mutations, filtering, error
-states, and confirmation flows using deterministic mocked GraphQL responses.
+## Author
+
+Designed and built by [Juan Charria](https://github.com/justjuank) as a
+portfolio project for learning and demonstrating production-oriented GraphQL.
